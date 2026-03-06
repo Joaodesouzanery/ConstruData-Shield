@@ -39,6 +39,9 @@ show_help() {
 Usage:
   ./shield start URL=<url> REPO=<name>   Start a security test
   ./shield logs ID=<workflow-id>         Tail workflow logs
+  ./shield workspaces                    List all workspaces
+  ./shield status ID=<workflow-id>       Show pipeline progress
+  ./shield dashboard                     Open web dashboard
   ./shield stop                          Stop all containers
   ./shield help                          Show this help
 
@@ -197,6 +200,119 @@ cmd_logs() {
   fi
 }
 
+cmd_workspaces() {
+  echo ""
+  echo "  ConstruData Shield - Workspaces"
+  echo "  ================================"
+  echo ""
+
+  if [ ! -d "./audit-logs" ]; then
+    echo "  No workspaces found."
+    return
+  fi
+
+  printf "  %-24s %-10s %-30s %s\n" "SESSION ID" "STATUS" "TARGET" "STARTED"
+  printf "  %-24s %-10s %-30s %s\n" "----------" "------" "------" "-------"
+
+  for session_dir in ./audit-logs/*/; do
+    if [ -f "${session_dir}session.json" ]; then
+      SESSION_ID=$(basename "$session_dir")
+      STATUS=$(python3 -c "import json; d=json.load(open('${session_dir}session.json')); print(d.get('status','unknown'))" 2>/dev/null || echo "unknown")
+      TARGET=$(python3 -c "import json; d=json.load(open('${session_dir}session.json')); print(d.get('webUrl','N/A')[:28])" 2>/dev/null || echo "N/A")
+      STARTED=$(python3 -c "import json; d=json.load(open('${session_dir}session.json')); print(d.get('startedAt','N/A')[:19])" 2>/dev/null || echo "N/A")
+
+      # Color based on status
+      case "$STATUS" in
+        completed) STATUS_FMT="\033[32m${STATUS}\033[0m" ;;
+        running)   STATUS_FMT="\033[33m${STATUS}\033[0m" ;;
+        failed)    STATUS_FMT="\033[31m${STATUS}\033[0m" ;;
+        *)         STATUS_FMT="$STATUS" ;;
+      esac
+
+      printf "  %-24s ${STATUS_FMT}%-$((10 - ${#STATUS}))s %-30s %s\n" "$SESSION_ID" "" "$TARGET" "$STARTED"
+    fi
+  done
+
+  echo ""
+  TOTAL=$(find ./audit-logs -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
+  echo "  Total: $TOTAL workspace(s)"
+  echo ""
+}
+
+cmd_status() {
+  parse_args "$@"
+
+  if [ -z "$ID" ]; then
+    echo "ERROR: ID is required"
+    echo "Usage: ./shield status ID=<workflow-id>"
+    exit 1
+  fi
+
+  SESSION_FILE="./audit-logs/${ID}/session.json"
+  if [ ! -f "$SESSION_FILE" ]; then
+    echo "ERROR: Session not found for ID: $ID"
+    exit 1
+  fi
+
+  echo ""
+  echo "  ConstruData Shield - Pipeline Status"
+  echo "  ======================================"
+
+  python3 -c "
+import json, sys
+
+with open('$SESSION_FILE') as f:
+    d = json.load(f)
+
+print(f\"  Session:  {d['sessionId']}\")
+print(f\"  Target:   {d['webUrl']}\")
+print(f\"  Status:   {d['status']}\")
+print(f\"  Started:  {d['startedAt']}\")
+print()
+print('  Agents:')
+print(f\"  {'Name':<22} {'Status':<12} {'Duration':<12} {'Cost':<10}\")
+print(f\"  {'-'*22} {'-'*12} {'-'*12} {'-'*10}\")
+
+total_cost = 0
+total_ms = 0
+for name, agent in d.get('agents', {}).items():
+    status = 'OK' if agent['success'] else 'FAILED'
+    ms = agent.get('duration_ms', 0)
+    cost = agent.get('cost_usd', 0)
+    total_cost += cost
+    total_ms += ms
+    dur = f'{ms/1000:.1f}s' if ms < 60000 else f'{ms//60000}m {(ms%60000)//1000}s'
+    print(f\"  {name:<22} {status:<12} {dur:<12} \${cost:.2f}\")
+
+print(f\"  {'-'*22} {'-'*12} {'-'*12} {'-'*10}\")
+dur = f'{total_ms//60000}m {(total_ms%60000)//1000}s'
+print(f\"  {'TOTAL':<22} {'':<12} {dur:<12} \${total_cost:.2f}\")
+print()
+" 2>/dev/null || echo "  Error reading session data"
+}
+
+cmd_dashboard() {
+  DASHBOARD_PATH="$(cd "$(dirname "$0")" && pwd)/dashboard/index.html"
+  if [ ! -f "$DASHBOARD_PATH" ]; then
+    echo "ERROR: Dashboard not found at $DASHBOARD_PATH"
+    exit 1
+  fi
+
+  echo "Opening dashboard..."
+
+  # Cross-platform open
+  if command -v xdg-open &>/dev/null; then
+    xdg-open "$DASHBOARD_PATH"
+  elif command -v open &>/dev/null; then
+    open "$DASHBOARD_PATH"
+  elif command -v start &>/dev/null; then
+    start "$DASHBOARD_PATH"
+  else
+    echo "Dashboard file: $DASHBOARD_PATH"
+    echo "Open this file in your browser"
+  fi
+}
+
 cmd_stop() {
   parse_args "$@"
 
@@ -216,6 +332,16 @@ case "${1:-help}" in
   logs)
     shift
     cmd_logs "$@"
+    ;;
+  workspaces)
+    cmd_workspaces
+    ;;
+  status)
+    shift
+    cmd_status "$@"
+    ;;
+  dashboard)
+    cmd_dashboard
     ;;
   stop)
     shift
