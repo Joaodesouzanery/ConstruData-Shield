@@ -1,6 +1,6 @@
 {
-  "buildCommand": null,
-  "outputDirectory": "dashboard",
+  "buildCommand": "",
+  "installCommand": "",
   "framework": null,
-  "installCommand": "echo 'Static dashboard - no install needed'"
+  "outputDirectory": "dashboard"
 }
