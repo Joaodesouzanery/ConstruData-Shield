@@ -22,87 +22,59 @@
         <span class="logo-label">Security</span>
         <span class="logo-team">ConstruData Shield</span>
       </div>
-      <button class="sidebar-toggle"><i class="fas fa-chevron-down"></i></button>
     </div>
 
     <nav class="sidebar-nav">
       <div class="nav-group">
         <span class="nav-group-label">Main Menu</span>
-        <a href="#" class="nav-item active">
+        <a href="#dashboard" class="nav-item active" data-page="dashboard">
           <i class="fas fa-chart-pie"></i>
           <span>Dashboard</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#scans" class="nav-item" data-page="scans">
           <i class="fas fa-crosshairs"></i>
           <span>Scans</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#vulnerabilities" class="nav-item" data-page="vulnerabilities">
           <i class="fas fa-bug"></i>
           <span>Vulnerabilities</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#reports" class="nav-item" data-page="reports">
           <i class="fas fa-file-shield"></i>
           <span>Reports</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#analytics" class="nav-item" data-page="analytics">
           <i class="fas fa-chart-line"></i>
           <span>Analytics</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#alerts" class="nav-item" data-page="alerts">
           <i class="fas fa-bell"></i>
           <span>Alerts</span>
-        </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-users"></i>
-          <span>Team Performance</span>
+          <span class="nav-badge">3</span>
         </a>
       </div>
 
       <div class="nav-group">
         <span class="nav-group-label">Targets</span>
-        <a href="#" class="nav-item">
+        <a href="#applications" class="nav-item" data-page="applications">
           <i class="fas fa-globe"></i>
           <span>Applications</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#endpoints" class="nav-item" data-page="endpoints">
           <i class="fas fa-server"></i>
           <span>API Endpoints</span>
-        </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-sitemap"></i>
-          <span>Infrastructure</span>
-        </a>
-      </div>
-
-      <div class="nav-group">
-        <span class="nav-group-label">Management</span>
-        <a href="#" class="nav-item">
-          <i class="fas fa-user-shield"></i>
-          <span>Roles & Permissions</span>
-        </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-credit-card"></i>
-          <span>Billing & Usage</span>
-        </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-plug"></i>
-          <span>Integrations</span>
         </a>
       </div>
 
       <div class="nav-group">
         <span class="nav-group-label">Settings</span>
-        <a href="#" class="nav-item">
-          <i class="fas fa-headset"></i>
-          <span>Support</span>
-        </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-circle-question"></i>
-          <span>Help Center</span>
-        </a>
-        <a href="#" class="nav-item">
+        <a href="#settings" class="nav-item" data-page="settings">
           <i class="fas fa-gear"></i>
           <span>System Settings</span>
+        </a>
+        <a href="#help" class="nav-item" data-page="help">
+          <i class="fas fa-circle-question"></i>
+          <span>Help Center</span>
         </a>
       </div>
     </nav>
@@ -112,7 +84,7 @@
   <main class="main-content">
     <!-- Top Bar -->
     <header class="top-bar">
-      <div class="breadcrumb">
+      <div class="breadcrumb" id="breadcrumb">
         <span>Dashboard</span>
         <i class="fas fa-chevron-right"></i>
         <span class="breadcrumb-active">Overview</span>
@@ -120,7 +92,7 @@
       <div class="top-bar-right">
         <div class="search-box">
           <i class="fas fa-search"></i>
-          <input type="text" placeholder="Search...">
+          <input type="text" placeholder="Search..." id="globalSearch">
         </div>
         <div class="period-selector">
           <span>Daily</span>
@@ -129,255 +101,297 @@
       </div>
     </header>
 
-    <!-- Welcome -->
+    <!-- Page container (SPA routing) -->
+    <div id="page-container"></div>
+  </main>
+
+  <!-- Page Templates -->
+
+  <!-- DASHBOARD PAGE -->
+  <template id="tpl-dashboard">
     <section class="welcome-section">
       <h1>Welcome back, <span class="highlight">Operator</span></h1>
     </section>
-
-    <!-- Stats Cards -->
     <section class="stats-grid">
       <div class="stat-card">
-        <div class="stat-header">
-          <span class="stat-label">TOTAL SCANS</span>
-        </div>
+        <div class="stat-header"><span class="stat-label">TOTAL SCANS</span></div>
         <div class="stat-body">
           <div class="stat-info">
-            <span class="stat-value">1,247</span>
-            <div class="stat-bars">
-              <span class="bar" style="height:40%"></span>
-              <span class="bar" style="height:60%"></span>
-              <span class="bar" style="height:80%"></span>
-              <span class="bar" style="height:55%"></span>
-              <span class="bar" style="height:90%"></span>
-            </div>
+            <span class="stat-value" id="stat-scans">0</span>
+            <div class="stat-bars"><span class="bar" style="height:40%"></span><span class="bar" style="height:60%"></span><span class="bar" style="height:80%"></span><span class="bar" style="height:55%"></span><span class="bar" style="height:90%"></span></div>
           </div>
-          <div class="stat-footer">
-            <i class="fas fa-circle-info"></i>
-            <span class="stat-change positive">+12.4% last month</span>
-          </div>
+          <div class="stat-footer"><i class="fas fa-circle-info"></i><span class="stat-change positive">+12.4% last month</span></div>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-header">
-          <span class="stat-label">VULNERABILITIES FOUND</span>
-        </div>
+        <div class="stat-header"><span class="stat-label">VULNERABILITIES FOUND</span></div>
         <div class="stat-body">
           <div class="stat-info">
-            <span class="stat-value">3,891</span>
+            <span class="stat-value" id="stat-vulns">0</span>
             <span class="stat-sub">Findings</span>
-            <div class="stat-bars">
-              <span class="bar" style="height:70%"></span>
-              <span class="bar" style="height:45%"></span>
-              <span class="bar" style="height:85%"></span>
-              <span class="bar" style="height:60%"></span>
-              <span class="bar" style="height:75%"></span>
-            </div>
+            <div class="stat-bars"><span class="bar" style="height:70%"></span><span class="bar" style="height:45%"></span><span class="bar" style="height:85%"></span><span class="bar" style="height:60%"></span><span class="bar" style="height:75%"></span></div>
           </div>
-          <div class="stat-footer">
-            <i class="fas fa-circle-info"></i>
-            <span class="stat-change positive">+8.2% last month</span>
-          </div>
+          <div class="stat-footer"><i class="fas fa-circle-info"></i><span class="stat-change positive">+8.2% last month</span></div>
         </div>
       </div>
-
       <div class="stat-card">
-        <div class="stat-header">
-          <span class="stat-label">CRITICAL ISSUES</span>
-        </div>
+        <div class="stat-header"><span class="stat-label">CRITICAL ISSUES</span></div>
         <div class="stat-body">
           <div class="stat-info">
-            <span class="stat-value">47</span>
+            <span class="stat-value" id="stat-critical">0</span>
             <span class="stat-sub">Active</span>
-            <div class="stat-bars">
-              <span class="bar bar-critical" style="height:90%"></span>
-              <span class="bar bar-critical" style="height:65%"></span>
-              <span class="bar bar-critical" style="height:50%"></span>
-              <span class="bar bar-critical" style="height:80%"></span>
-              <span class="bar bar-critical" style="height:70%"></span>
-            </div>
+            <div class="stat-bars"><span class="bar bar-critical" style="height:90%"></span><span class="bar bar-critical" style="height:65%"></span><span class="bar bar-critical" style="height:50%"></span><span class="bar bar-critical" style="height:80%"></span><span class="bar bar-critical" style="height:70%"></span></div>
           </div>
-          <div class="stat-footer">
-            <i class="fas fa-circle-info"></i>
-            <span class="stat-change negative">-3.1% last month</span>
-          </div>
+          <div class="stat-footer"><i class="fas fa-circle-info"></i><span class="stat-change negative">-3.1% last month</span></div>
         </div>
       </div>
     </section>
-
-    <!-- Charts Row -->
     <section class="charts-row">
       <div class="chart-card chart-main">
         <div class="chart-header">
-          <div class="chart-title">
-            <span>VULNERABILITY TREND</span>
-            <i class="fas fa-circle-info"></i>
-          </div>
+          <div class="chart-title"><span>VULNERABILITY TREND</span> <i class="fas fa-circle-info"></i></div>
           <button class="chart-menu"><i class="fas fa-ellipsis"></i></button>
         </div>
         <div class="chart-sub-header">
-          <div class="chart-total">
-            <span class="chart-total-label">Total Found:</span>
-            <span class="chart-total-value">3,891</span>
-          </div>
-          <div class="chart-legend">
-            <span class="legend-item"><span class="legend-dot new"></span> NEW</span>
-            <span class="legend-item"><span class="legend-dot resolved"></span> RESOLVED</span>
-          </div>
-          <div class="chart-period-tabs">
-            <button>Weekly</button>
-            <button class="active">Monthly</button>
-            <button>Yearly</button>
-          </div>
+          <div class="chart-total"><span class="chart-total-label">Total Found:</span> <span class="chart-total-value">3,891</span></div>
+          <div class="chart-legend"><span class="legend-item"><span class="legend-dot new"></span> NEW</span><span class="legend-item"><span class="legend-dot resolved"></span> RESOLVED</span></div>
+          <div class="chart-period-tabs"><button>Weekly</button><button class="active">Monthly</button><button>Yearly</button></div>
         </div>
-        <div class="chart-container">
-          <canvas id="vulnTrendChart"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="vulnTrendChart"></canvas></div>
       </div>
-
       <div class="chart-card chart-side">
-        <div class="chart-header">
-          <div class="chart-title">
-            <span>SEVERITY</span>
-          </div>
-        </div>
+        <div class="chart-header"><div class="chart-title"><span>SEVERITY</span></div></div>
         <div class="severity-stats">
-          <div class="severity-total">
-            <span class="severity-total-label">Total Issues</span>
-            <span class="severity-total-value">3,891</span>
-          </div>
-          <button class="btn-outline"><i class="fas fa-wand-magic-sparkles"></i> Get AI Summary</button>
+          <div class="severity-total"><span class="severity-total-label">Total Issues</span><span class="severity-total-value">3,891</span></div>
+          <button class="btn-outline"><i class="fas fa-wand-magic-sparkles"></i> AI Summary</button>
         </div>
-        <div class="chart-container chart-container-sm">
-          <canvas id="severityChart"></canvas>
-        </div>
+        <div class="chart-container chart-container-sm"><canvas id="severityChart"></canvas></div>
         <div class="severity-legend">
-          <div class="severity-item">
-            <span class="severity-dot critical"></span>
-            <span>Critical</span>
-            <span class="severity-count">47</span>
-          </div>
-          <div class="severity-item">
-            <span class="severity-dot high"></span>
-            <span>High</span>
-            <span class="severity-count">189</span>
-          </div>
-          <div class="severity-item">
-            <span class="severity-dot medium"></span>
-            <span>Medium</span>
-            <span class="severity-count">1,204</span>
-          </div>
-          <div class="severity-item">
-            <span class="severity-dot low"></span>
-            <span>Low</span>
-            <span class="severity-count">2,451</span>
-          </div>
+          <div class="severity-item"><span class="severity-dot critical"></span><span>Critical</span><span class="severity-count">47</span></div>
+          <div class="severity-item"><span class="severity-dot high"></span><span>High</span><span class="severity-count">189</span></div>
+          <div class="severity-item"><span class="severity-dot medium"></span><span>Medium</span><span class="severity-count">1,204</span></div>
+          <div class="severity-item"><span class="severity-dot low"></span><span>Low</span><span class="severity-count">2,451</span></div>
         </div>
       </div>
     </section>
-
-    <!-- Recent Scans Table -->
     <section class="table-section">
       <div class="table-header">
-        <div class="table-title">
-          <span>RECENT SCANS</span>
-          <i class="fas fa-circle-info"></i>
+        <div class="table-title"><span>RECENT SCANS</span> <i class="fas fa-circle-info"></i></div>
+        <button class="btn-primary btn-sm" onclick="window.location.hash='scans'"><i class="fas fa-plus"></i> New Scan</button>
+      </div>
+      <div class="table-wrapper" id="dashboard-scans-table"></div>
+    </section>
+  </template>
+
+  <!-- SCANS PAGE -->
+  <template id="tpl-scans">
+    <section class="page-header-row">
+      <div>
+        <h1 class="page-title">Security Scans</h1>
+        <p class="page-subtitle">Launch and monitor automated penetration tests</p>
+      </div>
+      <button class="btn-primary" id="btn-new-scan"><i class="fas fa-plus"></i> New Scan</button>
+    </section>
+
+    <!-- New Scan Form (hidden by default) -->
+    <section class="form-card" id="new-scan-form" style="display:none">
+      <div class="form-card-header">
+        <h2><i class="fas fa-rocket"></i> Launch New Scan</h2>
+        <button class="btn-ghost" id="btn-close-form"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Target URL <span class="required">*</span></label>
+          <input type="url" id="scan-url" placeholder="https://app.construdata.com" class="form-input">
+          <span class="form-hint">The URL of the application to test</span>
         </div>
-        <div class="table-search">
-          <i class="fas fa-search"></i>
-          <input type="text" placeholder="Search scans...">
+        <div class="form-group">
+          <label>Repository Name <span class="required">*</span></label>
+          <input type="text" id="scan-repo" placeholder="my-app" class="form-input">
+          <span class="form-hint">Folder name under ./repos/</span>
+        </div>
+        <div class="form-group">
+          <label>Scan Type</label>
+          <select id="scan-type" class="form-input">
+            <option value="full">Full Pipeline (5 phases, ~1h)</option>
+            <option value="recon">Recon Only (~15m)</option>
+            <option value="vuln">Vulnerability Analysis Only (~30m)</option>
+            <option value="auth">Auth Focus (~20m)</option>
+            <option value="api">API Only (~45m)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Workspace Name</label>
+          <input type="text" id="scan-workspace" placeholder="audit-q1-2026 (optional)" class="form-input">
+          <span class="form-hint">Named workspace for resume capability</span>
         </div>
       </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th><input type="checkbox"></th>
-              <th>ID <i class="fas fa-sort"></i></th>
-              <th>TARGET <i class="fas fa-sort"></i></th>
-              <th>TYPE <i class="fas fa-sort"></i></th>
-              <th>STATUS <i class="fas fa-sort"></i></th>
-              <th>VULNS <i class="fas fa-sort"></i></th>
-              <th>DURATION <i class="fas fa-sort"></i></th>
-              <th>COST <i class="fas fa-sort"></i></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><input type="checkbox"></td>
-              <td class="id-cell">#SC-0491</td>
-              <td>app.construdata.com</td>
-              <td>Full Pipeline</td>
-              <td><span class="status-badge success">Completed</span></td>
-              <td>23</td>
-              <td>1h 12m</td>
-              <td>$47.30</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox"></td>
-              <td class="id-cell">#SC-0490</td>
-              <td>api.construdata.com</td>
-              <td>API Only</td>
-              <td><span class="status-badge success">Completed</span></td>
-              <td>8</td>
-              <td>45m</td>
-              <td>$31.20</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox"></td>
-              <td class="id-cell">#SC-0489</td>
-              <td>portal.construdata.com</td>
-              <td>Full Pipeline</td>
-              <td><span class="status-badge running">Running</span></td>
-              <td>--</td>
-              <td>32m</td>
-              <td>$18.50</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox"></td>
-              <td class="id-cell">#SC-0488</td>
-              <td>auth.construdata.com</td>
-              <td>Auth Focus</td>
-              <td><span class="status-badge success">Completed</span></td>
-              <td>5</td>
-              <td>28m</td>
-              <td>$22.10</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox"></td>
-              <td class="id-cell">#SC-0487</td>
-              <td>dashboard.construdata.com</td>
-              <td>Full Pipeline</td>
-              <td><span class="status-badge failed">Failed</span></td>
-              <td>12</td>
-              <td>56m</td>
-              <td>$38.90</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox"></td>
-              <td class="id-cell">#SC-0486</td>
-              <td>mobile-api.construdata.com</td>
-              <td>API Only</td>
-              <td><span class="status-badge success">Completed</span></td>
-              <td>15</td>
-              <td>52m</td>
-              <td>$35.60</td>
-            </tr>
-            <tr>
-              <td><input type="checkbox"></td>
-              <td class="id-cell">#SC-0485</td>
-              <td>admin.construdata.com</td>
-              <td>Full Pipeline</td>
-              <td><span class="status-badge success">Completed</span></td>
-              <td>31</td>
-              <td>1h 25m</td>
-              <td>$52.40</td>
-            </tr>
-          </tbody>
-        </table>
+
+      <!-- Auth config (collapsible) -->
+      <details class="form-details">
+        <summary><i class="fas fa-key"></i> Authentication Configuration</summary>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Login Type</label>
+            <select id="auth-type" class="form-input">
+              <option value="">No authentication</option>
+              <option value="form">Form Login</option>
+              <option value="api">API Key</option>
+              <option value="basic">Basic Auth</option>
+              <option value="sso">SSO/OAuth</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Login URL</label>
+            <input type="url" id="auth-url" placeholder="https://app.construdata.com/login" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="auth-user" placeholder="test@example.com" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="auth-pass" placeholder="test-password" class="form-input">
+          </div>
+        </div>
+      </details>
+
+      <!-- Rules config (collapsible) -->
+      <details class="form-details">
+        <summary><i class="fas fa-filter"></i> Scope Rules</summary>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Paths to Avoid (one per line)</label>
+            <textarea id="rules-avoid" class="form-input form-textarea" placeholder="/api/payments&#10;/logout&#10;/admin/delete"></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label>Focus Areas (one per line)</label>
+            <textarea id="rules-focus" class="form-input form-textarea" placeholder="/api&#10;/admin&#10;/auth"></textarea>
+          </div>
+        </div>
+      </details>
+
+      <div class="form-actions">
+        <button class="btn-ghost" id="btn-cancel-scan">Cancel</button>
+        <button class="btn-primary" id="btn-launch-scan"><i class="fas fa-rocket"></i> Launch Scan</button>
+      </div>
+
+      <!-- CLI command preview -->
+      <div class="cli-preview" id="cli-preview">
+        <div class="cli-preview-header"><i class="fas fa-terminal"></i> CLI Command</div>
+        <code id="cli-command">./shield start URL=https://... REPO=...</code>
       </div>
     </section>
-  </main>
+
+    <!-- Scan History -->
+    <section class="table-section">
+      <div class="table-header">
+        <div class="table-title"><span>SCAN HISTORY</span> <i class="fas fa-circle-info"></i></div>
+        <div class="table-search"><i class="fas fa-search"></i><input type="text" placeholder="Search scans..." id="scan-search"></div>
+      </div>
+      <div class="table-wrapper" id="scans-table"></div>
+    </section>
+  </template>
+
+  <!-- VULNERABILITIES PAGE -->
+  <template id="tpl-vulnerabilities">
+    <section class="page-header-row">
+      <div>
+        <h1 class="page-title">Vulnerabilities</h1>
+        <p class="page-subtitle">All findings across scans, sorted by severity</p>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">All <span class="filter-count">3,891</span></button>
+        <button class="filter-btn critical" data-filter="critical">Critical <span class="filter-count">47</span></button>
+        <button class="filter-btn high" data-filter="high">High <span class="filter-count">189</span></button>
+        <button class="filter-btn medium" data-filter="medium">Medium <span class="filter-count">1,204</span></button>
+        <button class="filter-btn low" data-filter="low">Low <span class="filter-count">2,451</span></button>
+      </div>
+    </section>
+    <section class="vuln-list" id="vuln-list"></section>
+  </template>
+
+  <!-- REPORTS PAGE -->
+  <template id="tpl-reports">
+    <section class="page-header-row">
+      <div>
+        <h1 class="page-title">Security Reports</h1>
+        <p class="page-subtitle">Executive reports generated after each scan</p>
+      </div>
+    </section>
+    <section class="reports-grid" id="reports-grid"></section>
+  </template>
+
+  <!-- GENERIC PAGE (for unbuilt sections) -->
+  <template id="tpl-generic">
+    <section class="empty-state">
+      <div class="empty-state-icon"><i class="fas fa-hard-hat"></i></div>
+      <h2 class="empty-state-title" id="generic-title">Coming Soon</h2>
+      <p class="empty-state-text">This section is under construction. Use the CLI for full functionality.</p>
+      <div class="empty-state-cli">
+        <code>./shield --help</code>
+      </div>
+    </section>
+  </template>
+
+  <!-- HELP PAGE -->
+  <template id="tpl-help">
+    <section class="page-header-row">
+      <div>
+        <h1 class="page-title">Help Center</h1>
+        <p class="page-subtitle">How to use ConstruData Shield</p>
+      </div>
+    </section>
+    <section class="help-grid">
+      <div class="help-card">
+        <div class="help-card-icon"><i class="fas fa-play-circle"></i></div>
+        <h3>Getting Started</h3>
+        <ol class="help-steps">
+          <li><strong>Clone this repo</strong> on a server with Docker</li>
+          <li>Add your <code>ANTHROPIC_API_KEY</code> to <code>.env</code></li>
+          <li>Place your target app's source code in <code>./repos/your-app/</code></li>
+          <li>Go to <strong>Scans</strong> and click <strong>New Scan</strong></li>
+          <li>Run the generated CLI command on your server</li>
+        </ol>
+      </div>
+      <div class="help-card">
+        <div class="help-card-icon"><i class="fas fa-terminal"></i></div>
+        <h3>CLI Quick Reference</h3>
+        <div class="help-cli">
+          <div class="help-cli-row"><code>./shield start URL=... REPO=...</code><span>Start a scan</span></div>
+          <div class="help-cli-row"><code>./shield status ID=...</code><span>View progress</span></div>
+          <div class="help-cli-row"><code>./shield logs ID=...</code><span>Tail live logs</span></div>
+          <div class="help-cli-row"><code>./shield workspaces</code><span>List all scans</span></div>
+          <div class="help-cli-row"><code>./shield stop</code><span>Stop containers</span></div>
+        </div>
+      </div>
+      <div class="help-card">
+        <div class="help-card-icon"><i class="fas fa-shield-halved"></i></div>
+        <h3>What Gets Tested</h3>
+        <div class="help-categories">
+          <span class="help-tag"><i class="fas fa-database"></i> SQL/NoSQL Injection</span>
+          <span class="help-tag"><i class="fas fa-code"></i> XSS (Reflected/Stored/DOM)</span>
+          <span class="help-tag"><i class="fas fa-key"></i> Auth Bypass & JWT</span>
+          <span class="help-tag"><i class="fas fa-globe"></i> SSRF</span>
+          <span class="help-tag"><i class="fas fa-user-lock"></i> IDOR & AuthZ</span>
+          <span class="help-tag"><i class="fas fa-terminal"></i> Command Injection</span>
+          <span class="help-tag"><i class="fas fa-file-code"></i> Template Injection</span>
+          <span class="help-tag"><i class="fas fa-unlock"></i> Privilege Escalation</span>
+        </div>
+      </div>
+      <div class="help-card">
+        <div class="help-card-icon"><i class="fas fa-diagram-project"></i></div>
+        <h3>Pipeline Phases</h3>
+        <div class="help-pipeline">
+          <div class="pipeline-phase"><span class="phase-num">1</span><div><strong>Pre-Recon</strong><br>Source code analysis (Claude Opus)</div></div>
+          <div class="pipeline-phase"><span class="phase-num">2</span><div><strong>Recon</strong><br>Live app exploration (Playwright)</div></div>
+          <div class="pipeline-phase"><span class="phase-num">3</span><div><strong>Vuln Analysis</strong><br>5 parallel agents hunt vulnerabilities</div></div>
+          <div class="pipeline-phase"><span class="phase-num">4</span><div><strong>Exploitation</strong><br>5 agents attempt real exploits</div></div>
+          <div class="pipeline-phase"><span class="phase-num">5</span><div><strong>Report</strong><br>Executive security assessment</div></div>
+        </div>
+      </div>
+    </section>
+  </template>
 
   <script src="app.js"></script>
 </body>
