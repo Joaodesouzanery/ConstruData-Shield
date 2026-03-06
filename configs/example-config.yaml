@@ -1,0 +1,40 @@
+# ConstruData Shield - Example Configuration
+# Copy this file and modify for your target application
+
+authentication:
+  login_type: form
+  login_url: "https://your-app.com/login"
+  credentials:
+    username: "test@example.com"
+    password: "your-test-password"
+    # totp_secret: "YOUR_BASE32_SECRET"  # Uncomment for 2FA
+
+  login_flow:
+    - "Type $username into the email field"
+    - "Type $password into the password field"
+    - "Click the 'Sign In' button"
+
+  success_condition:
+    type: url_contains
+    value: "/dashboard"
+
+rules:
+  avoid:
+    - description: "Do not test logout functionality"
+      type: path
+      url_path: "/logout"
+    - description: "Do not test payment processing"
+      type: path
+      url_path: "/api/payments"
+
+  focus:
+    - description: "Focus on API endpoints"
+      type: path
+      url_path: "/api"
+    - description: "Focus on admin panel"
+      type: path
+      url_path: "/admin"
+
+pipeline:
+  # retry_preset: subscription  # Uncomment for Anthropic subscription plans
+  max_concurrent_pipelines: 5   # 1-5, default 5

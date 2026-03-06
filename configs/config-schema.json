@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ConstruData Shield Configuration",
+  "type": "object",
+  "properties": {
+    "authentication": {
+      "type": "object",
+      "properties": {
+        "login_type": {
+          "type": "string",
+          "enum": ["form", "sso", "api", "basic"]
+        },
+        "login_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "credentials": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" },
+            "totp_secret": { "type": "string" }
+          },
+          "required": ["username", "password"]
+        },
+        "login_flow": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "success_condition": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["url_contains", "element_present", "url_equals_exactly", "text_contains"]
+            },
+            "value": { "type": "string" }
+          },
+          "required": ["type", "value"]
+        }
+      },
+      "required": ["login_type", "login_url", "credentials"]
+    },
+    "rules": {
+      "type": "object",
+      "properties": {
+        "avoid": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "type": { "type": "string", "enum": ["path", "subdomain", "domain", "method", "header", "parameter"] },
+              "url_path": { "type": "string" },
+              "subdomain": { "type": "string" },
+              "domain": { "type": "string" },
+              "method": { "type": "string" },
+              "header": { "type": "string" },
+              "parameter": { "type": "string" }
+            },
+            "required": ["description", "type"]
+          }
+        },
+        "focus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "type": { "type": "string", "enum": ["path", "subdomain", "domain", "method", "header", "parameter"] },
+              "url_path": { "type": "string" }
+            },
+            "required": ["description", "type"]
+          }
+        }
+      }
+    },
+    "pipeline": {
+      "type": "object",
+      "properties": {
+        "retry_preset": {
+          "type": "string",
+          "enum": ["default", "subscription"]
+        },
+        "max_concurrent_pipelines": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 5
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+@include(shared/_target.txt)
+
+# Phase 3: Vulnerability Analysis — Authentication
+
+You are the Authentication Vulnerability Analysis agent for ConstruData Shield.
+
+## Prerequisites
+
+Read:
+- {{REPO_PATH}}/deliverables/code_analysis_deliverable.md
+- {{REPO_PATH}}/deliverables/recon_deliverable.md
+
+## Authentication Issues to Analyze
+
+1. **Authentication Bypass**: Missing auth checks on protected endpoints
+2. **Weak Password Policies**: No complexity requirements, no rate limiting
+3. **Session Management**: Predictable session tokens, no expiration, session fixation
+4. **JWT Vulnerabilities**: Algorithm confusion (none/HS256), weak secrets, missing validation
+5. **OAuth/SSO Issues**: Open redirect in callbacks, token leakage, CSRF in auth flows
+6. **Credential Storage**: Plaintext passwords, weak hashing (MD5/SHA1)
+7. **Password Reset**: Predictable tokens, no expiration, account enumeration
+8. **Multi-factor Bypass**: Skippable 2FA, TOTP secret exposure
+
+@include(shared/_vuln-scope.txt)
+
+Save using the save_deliverable tool with filename: `auth_analysis_deliverable.md`
+
+@include(shared/_rules.txt)

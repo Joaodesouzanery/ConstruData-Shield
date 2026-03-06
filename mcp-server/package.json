@@ -1,0 +1,18 @@
+{
+  "name": "shield-helper-mcp",
+  "version": "1.0.0",
+  "description": "ConstruData Shield Helper MCP Server",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.38",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3"
+  }
+}

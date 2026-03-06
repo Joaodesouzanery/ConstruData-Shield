@@ -1,0 +1,15 @@
+## Rules and Constraints
+
+### Avoidance Rules
+{{RULES_AVOID}}
+
+### Focus Areas
+{{RULES_FOCUS}}
+
+### General Rules
+- Do NOT perform destructive actions (DELETE database, DROP tables, etc.)
+- Do NOT attempt denial-of-service attacks
+- Do NOT exfiltrate real user data — use test accounts only
+- Do NOT modify production data
+- Focus on proving vulnerabilities exist, not causing damage
+- Always use the save_deliverable tool from the {{MCP_SERVER}} MCP server to save your findings

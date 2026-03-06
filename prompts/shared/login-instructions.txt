@@ -1,0 +1,11 @@
+## Authentication Instructions
+
+{{LOGIN_INSTRUCTIONS}}
+
+### Authentication Flow
+If authentication is configured, follow these steps:
+1. Navigate to the login URL
+2. Enter the credentials as specified
+3. If 2FA/TOTP is required, use the generate_totp tool from the {{MCP_SERVER}} MCP server
+4. Verify successful login by checking the success condition
+5. Maintain the authenticated session for all subsequent requests

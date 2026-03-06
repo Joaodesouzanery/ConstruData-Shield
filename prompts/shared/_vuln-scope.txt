@@ -1,0 +1,11 @@
+## Vulnerability Analysis Scope
+
+For each potential vulnerability you identify:
+
+1. **Describe the vulnerability**: What is it, where is it, and why does it exist?
+2. **Trace the data flow**: Show the path from user input (source) to dangerous operation (sink)
+3. **Assess exploitability**: Can this be exploited? What conditions are needed?
+4. **Propose exploit strategy**: How would you exploit this? What payload would you use?
+5. **Rate severity**: Critical / High / Medium / Low based on impact and exploitability
+
+Save your analysis using the save_deliverable tool with the appropriate filename.

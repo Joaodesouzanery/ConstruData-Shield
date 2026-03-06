@@ -1,0 +1,227 @@
+#!/bin/bash
+# ConstruData Shield CLI - AI Security Testing Platform
+
+set -e
+
+# Prevent MSYS path conversion on Windows
+case "$OSTYPE" in
+  msys*) export MSYS_NO_PATHCONV=1 ;;
+esac
+
+COMPOSE_FILE="docker-compose.yml"
+
+# Load .env if present
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+fi
+
+show_help() {
+  cat << 'EOF'
+
+   ██████╗ ██████╗ ███╗   ██╗███████╗████████╗██████╗ ██╗   ██╗██████╗  █████╗ ████████╗ █████╗
+  ██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝██╔══██╗██║   ██║██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗
+  ██║     ██║   ██║██╔██╗ ██║███████╗   ██║   ██████╔╝██║   ██║██║  ██║███████║   ██║   ███████║
+  ██║     ██║   ██║██║╚██╗██║╚════██║   ██║   ██╔══██╗██║   ██║██║  ██║██╔══██║   ██║   ██╔══██║
+  ╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   ██║  ██║╚██████╔╝██████╔╝██║  ██║   ██║   ██║  ██║
+   ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
+
+           ███████╗██╗  ██╗██╗███████╗██╗     ██████╗
+           ██╔════╝██║  ██║██║██╔════╝██║     ██╔══██╗
+           ███████╗███████║██║█████╗  ██║     ██║  ██║
+           ╚════██║██╔══██║██║██╔══╝  ██║     ██║  ██║
+           ███████║██║  ██║██║███████╗███████╗██████╔╝
+           ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝
+
+           AI Security Testing Platform
+
+Usage:
+  ./shield start URL=<url> REPO=<name>   Start a security test
+  ./shield logs ID=<workflow-id>         Tail workflow logs
+  ./shield stop                          Stop all containers
+  ./shield help                          Show this help
+
+Options for 'start':
+  REPO=<name>            Folder name under ./repos/
+  CONFIG=<path>          Configuration file (YAML)
+  OUTPUT=<path>          Output directory (default: ./audit-logs/)
+  WORKSPACE=<name>       Named workspace (auto-resumes if exists)
+  PIPELINE_TESTING=true  Fast testing mode
+
+Options for 'stop':
+  CLEAN=true             Remove all data including volumes
+
+Examples:
+  ./shield start URL=https://example.com REPO=my-app
+  ./shield start URL=https://example.com REPO=my-app CONFIG=./configs/app.yaml
+  ./shield start URL=https://example.com REPO=my-app WORKSPACE=q1-audit
+  ./shield stop CLEAN=true
+
+Monitor at http://localhost:8233
+EOF
+}
+
+parse_args() {
+  for arg in "$@"; do
+    case "$arg" in
+      URL=*) URL="${arg#URL=}" ;;
+      REPO=*) REPO="${arg#REPO=}" ;;
+      CONFIG=*) CONFIG="${arg#CONFIG=}" ;;
+      OUTPUT=*) OUTPUT="${arg#OUTPUT=}" ;;
+      ID=*) ID="${arg#ID=}" ;;
+      CLEAN=*) CLEAN="${arg#CLEAN=}" ;;
+      PIPELINE_TESTING=*) PIPELINE_TESTING="${arg#PIPELINE_TESTING=}" ;;
+      REBUILD=*) REBUILD="${arg#REBUILD=}" ;;
+      WORKSPACE=*) WORKSPACE="${arg#WORKSPACE=}" ;;
+    esac
+  done
+}
+
+is_temporal_ready() {
+  docker compose -f "$COMPOSE_FILE" exec -T temporal \
+    temporal operator cluster health --address localhost:7233 2>/dev/null | grep -q "SERVING"
+}
+
+ensure_containers() {
+  if is_temporal_ready; then
+    return 0
+  fi
+
+  echo "Starting ConstruData Shield containers..."
+  if [ "$REBUILD" = "true" ]; then
+    echo "Rebuilding with --no-cache..."
+    docker compose -f "$COMPOSE_FILE" build --no-cache worker
+  fi
+  docker compose -f "$COMPOSE_FILE" up -d --build
+
+  echo "Waiting for Temporal to be ready..."
+  for i in $(seq 1 30); do
+    if is_temporal_ready; then
+      echo "Temporal is ready!"
+      return 0
+    fi
+    if [ "$i" -eq 30 ]; then
+      echo "Timeout waiting for Temporal"
+      exit 1
+    fi
+    sleep 2
+  done
+}
+
+cmd_start() {
+  parse_args "$@"
+
+  if [ -z "$URL" ] || [ -z "$REPO" ]; then
+    echo "ERROR: URL and REPO are required"
+    echo "Usage: ./shield start URL=<url> REPO=<name>"
+    exit 1
+  fi
+
+  # Check for API key
+  if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+    if [ "$CLAUDE_CODE_USE_BEDROCK" != "1" ] && [ "$CLAUDE_CODE_USE_VERTEX" != "1" ]; then
+      echo "ERROR: Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN in .env"
+      exit 1
+    fi
+  fi
+
+  # Determine container path for REPO
+  case "$REPO" in
+    /repos/*)
+      CONTAINER_REPO="$REPO"
+      ;;
+    *)
+      if [ ! -d "./repos/$REPO" ]; then
+        echo "ERROR: Repository not found at ./repos/$REPO"
+        echo "Place your target repository under the ./repos/ directory"
+        exit 1
+      fi
+      CONTAINER_REPO="/repos/$REPO"
+      ;;
+  esac
+
+  # Handle custom OUTPUT directory
+  if [ -n "$OUTPUT" ]; then
+    mkdir -p "$OUTPUT"
+    chmod 777 "$OUTPUT"
+    export OUTPUT_DIR="$OUTPUT"
+  fi
+
+  # Ensure directories exist
+  mkdir -p ./audit-logs ./credentials
+  chmod 777 ./audit-logs
+
+  if [ -d "./repos/$REPO" ]; then
+    mkdir -p "./repos/$REPO/deliverables"
+    chmod 777 "./repos/$REPO/deliverables"
+  fi
+
+  ensure_containers
+
+  # Build optional args
+  ARGS=""
+  [ -n "$CONFIG" ] && ARGS="$ARGS --config $CONFIG"
+  if [ -n "$OUTPUT" ]; then
+    ARGS="$ARGS --output /app/output"
+  fi
+  [ "$PIPELINE_TESTING" = "true" ] && ARGS="$ARGS --pipeline-testing"
+  [ -n "$WORKSPACE" ] && ARGS="$ARGS --workspace $WORKSPACE"
+
+  # Submit workflow
+  docker compose -f "$COMPOSE_FILE" exec -T worker \
+    node dist/temporal/client.js "$URL" "$CONTAINER_REPO" $ARGS
+}
+
+cmd_logs() {
+  parse_args "$@"
+
+  if [ -z "$ID" ]; then
+    echo "ERROR: ID is required"
+    echo "Usage: ./shield logs ID=<workflow-id>"
+    exit 1
+  fi
+
+  WORKFLOW_LOG=""
+  if [ -f "./audit-logs/${ID}/workflow.log" ]; then
+    WORKFLOW_LOG="./audit-logs/${ID}/workflow.log"
+  fi
+
+  if [ -n "$WORKFLOW_LOG" ]; then
+    echo "Tailing workflow log: $WORKFLOW_LOG"
+    tail -f "$WORKFLOW_LOG"
+  else
+    echo "ERROR: Workflow log not found for ID: $ID"
+    echo "Check http://localhost:8233 for workflow details"
+    exit 1
+  fi
+}
+
+cmd_stop() {
+  parse_args "$@"
+
+  if [ "$CLEAN" = "true" ]; then
+    docker compose -f "$COMPOSE_FILE" down -v
+  else
+    docker compose -f "$COMPOSE_FILE" down
+  fi
+}
+
+# Main dispatch
+case "${1:-help}" in
+  start)
+    shift
+    cmd_start "$@"
+    ;;
+  logs)
+    shift
+    cmd_logs "$@"
+    ;;
+  stop)
+    shift
+    cmd_stop "$@"
+    ;;
+  help|--help|-h|*)
+    show_help
+    ;;
+esac
