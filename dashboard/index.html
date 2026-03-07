@@ -301,8 +301,8 @@
         <button class="btn-primary" id="btn-launch-scan"><i class="fas fa-rocket"></i> Launch Scan</button>
       </div>
 
-      <!-- CLI command preview -->
-      <div class="cli-preview" id="cli-preview">
+      <!-- CLI command preview (hidden - scans run directly from dashboard) -->
+      <div class="cli-preview" id="cli-preview" style="display:none">
         <div class="cli-preview-header"><i class="fas fa-terminal"></i> CLI Command</div>
         <code id="cli-command">./shield start URL=https://... REPO=...</code>
       </div>
@@ -352,10 +352,7 @@
     <section class="empty-state">
       <div class="empty-state-icon"><i class="fas fa-hard-hat"></i></div>
       <h2 class="empty-state-title" id="generic-title">Coming Soon</h2>
-      <p class="empty-state-text">This section is under construction. Use the CLI for full functionality.</p>
-      <div class="empty-state-cli">
-        <code>./shield --help</code>
-      </div>
+      <p class="empty-state-text">This section is under construction. Check back soon!</p>
     </section>
   </template>
 

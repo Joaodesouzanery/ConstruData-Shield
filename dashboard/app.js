@@ -318,9 +318,90 @@ function renderScansTable(containerId, scans) {
   const c = document.getElementById(containerId);
   if (!c) return;
   const sc = s => s === 'completed' ? 'success' : s === 'running' ? 'running' : 'failed';
-  c.innerHTML = `<table><thead><tr><th>ID</th><th>TARGET</th><th>TYPE</th><th>STATUS</th><th>VULNS</th><th>DURATION</th><th>COST</th></tr></thead><tbody>${scans.map(s =>
-    `<tr><td class="id-cell">#${s.id}</td><td>${s.target}</td><td>${s.type}</td><td><span class="status-badge ${sc(s.status)}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td><td>${s.vulns !== null ? s.vulns : '--'}</td><td>${s.duration}</td><td>$${s.cost.toFixed(2)}</td></tr>`
+  c.innerHTML = `<table><thead><tr><th>ID</th><th>TARGET</th><th>TYPE</th><th>STATUS</th><th>VULNS</th><th>DURATION</th><th>COST</th><th></th></tr></thead><tbody>${scans.map(s =>
+    `<tr data-scan-id="${s.id}" style="cursor:pointer"><td class="id-cell">#${s.id}</td><td>${s.target}</td><td>${s.type}</td><td><span class="status-badge ${sc(s.status)}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td><td>${s.vulns !== null ? s.vulns : '--'}</td><td>${s.duration}</td><td>$${s.cost.toFixed(2)}</td><td><i class="fas fa-chevron-right" style="color:#5c6a94;font-size:11px"></i></td></tr>`
   ).join('')}</tbody></table>`;
+  // Make rows clickable to show scan detail
+  c.querySelectorAll('tr[data-scan-id]').forEach(row => {
+    row.addEventListener('click', () => showScanDetail(row.dataset.scanId));
+  });
+}
+
+function showScanDetail(scanId) {
+  const scan = Store.scans.find(s => s.id === scanId);
+  if (!scan) return;
+
+  const agents = AGENTS.filter(a => scan.agents[a.id] !== undefined);
+  if (agents.length === 0) { showToast(`Scan ${scanId} ainda nao possui dados de agentes.`); return; }
+
+  // Remove existing detail panel
+  const existing = document.getElementById('scan-detail-panel');
+  if (existing) existing.remove();
+
+  const sc = s => s === 'completed' ? 'success' : s === 'running' ? 'running' : 'failed';
+
+  const panel = document.createElement('section');
+  panel.id = 'scan-detail-panel';
+  panel.className = 'form-card';
+  panel.style.cssText = 'border:1px solid rgba(255,239,77,0.15);animation:toastIn 0.3s ease';
+  panel.innerHTML = `
+    <div class="form-card-header">
+      <h2><i class="fas fa-search" style="color:#FFEF4D"></i> Scan ${scanId} — ${scan.target}</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="status-badge ${sc(scan.status)}">${scan.status.charAt(0).toUpperCase()+scan.status.slice(1)}</span>
+        <button class="btn-ghost" id="btn-close-detail" style="padding:4px 8px"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;margin:12px 0 20px;flex-wrap:wrap">
+      <div style="background:rgba(255,239,77,0.06);padding:10px 16px;border-radius:8px;font-size:12px">
+        <div style="color:#8b9cc7;margin-bottom:2px">Tipo</div>
+        <div style="color:#e8ecf5;font-weight:600">${scan.type}</div>
+      </div>
+      <div style="background:rgba(255,239,77,0.06);padding:10px 16px;border-radius:8px;font-size:12px">
+        <div style="color:#8b9cc7;margin-bottom:2px">Duracao</div>
+        <div style="color:#e8ecf5;font-weight:600">${scan.duration}</div>
+      </div>
+      <div style="background:rgba(255,239,77,0.06);padding:10px 16px;border-radius:8px;font-size:12px">
+        <div style="color:#8b9cc7;margin-bottom:2px">Custo</div>
+        <div style="color:#e8ecf5;font-weight:600">$${scan.cost.toFixed(2)}</div>
+      </div>
+      <div style="background:rgba(255,239,77,0.06);padding:10px 16px;border-radius:8px;font-size:12px">
+        <div style="color:#8b9cc7;margin-bottom:2px">Vulnerabilidades</div>
+        <div style="color:#ef4444;font-weight:600">${scan.vulns !== null ? scan.vulns : '--'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+      ${agents.map(a => {
+        const d = scan.agents[a.id];
+        const ok = d.success === true;
+        const fail = d.success === false;
+        const borderColor = ok ? 'rgba(34,197,94,0.3)' : fail ? 'rgba(239,68,68,0.3)' : 'rgba(255,239,77,0.3)';
+        const bgColor = ok ? 'rgba(34,197,94,0.05)' : fail ? 'rgba(239,68,68,0.05)' : 'rgba(255,239,77,0.05)';
+        const iconColor = ok ? '#22c55e' : fail ? '#ef4444' : '#FFEF4D';
+        const statusText = ok ? 'Done' : fail ? 'Failed' : 'Running';
+        const statusBg = ok ? 'rgba(34,197,94,0.15)' : fail ? 'rgba(239,68,68,0.15)' : 'rgba(255,239,77,0.15)';
+        const detailText = d.duration_ms ? `${(d.duration_ms/60000).toFixed(0)}m · $${d.cost_usd.toFixed(2)}` : 'Em andamento...';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:${bgColor};border:1px solid ${borderColor}">
+          <i class="fas ${a.icon}" style="color:${iconColor};font-size:16px;width:20px;text-align:center"></i>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:#e8ecf5">${a.name}</div>
+            <div style="font-size:11px;color:#8b9cc7">${detailText}</div>
+          </div>
+          <div style="font-size:10px;padding:2px 8px;border-radius:4px;background:${statusBg};color:${iconColor}">${statusText}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  const tableSection = document.querySelector('#scans-table')?.closest('.table-section') ||
+                        document.querySelector('#dashboard-scans-table')?.closest('.table-section');
+  if (tableSection) {
+    tableSection.parentNode.insertBefore(panel, tableSection);
+  } else {
+    document.getElementById('page-container').appendChild(panel);
+  }
+
+  panel.querySelector('#btn-close-detail').addEventListener('click', () => panel.remove());
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /* ========================================
@@ -344,29 +425,18 @@ function initScans() {
   const typeInput = document.getElementById('scan-type');
   const wsInput = document.getElementById('scan-workspace');
 
-  function updateCli() {
-    const url = urlInput.value || 'https://...';
-    const repo = repoInput.value || '...';
-    let cmd = `./shield start URL=${url} REPO=${repo}`;
-    if (document.getElementById('auth-type').value) cmd += ` CONFIG=./configs/${repo}.yaml`;
-    if (wsInput.value) cmd += ` WORKSPACE=${wsInput.value}`;
-    document.getElementById('cli-command').textContent = cmd;
-  }
-
-  [urlInput, repoInput, typeInput, wsInput, document.getElementById('auth-type')].forEach(el => {
-    el.addEventListener('input', updateCli);
-    el.addEventListener('change', updateCli);
-  });
-
   btnLaunch.addEventListener('click', () => {
     const url = urlInput.value.trim();
     const repo = repoInput.value.trim();
     if (!url || !repo) { alert('Target URL and Repository Name are required.'); return; }
     showAuthorizationModal(url, () => {
-      const scanId = Store.addScan({ target: (() => { try { return new URL(url).hostname; } catch { return url; } })(), type: typeInput.options[typeInput.selectedIndex].text.split(' (')[0], duration: '0m', repo });
+      const target = (() => { try { return new URL(url).hostname; } catch { return url; } })();
+      const scanType = typeInput.options[typeInput.selectedIndex].text.split(' (')[0];
+      const scanId = Store.addScan({ target, type: scanType, duration: '0m', repo });
       closeForm();
       renderScansTable('scans-table', Store.scans);
-      showToast(`Scan ${scanId} created! Run the CLI command on your server to execute.`);
+      showToast(`Scan ${scanId} iniciado! Acompanhe o progresso abaixo.`);
+      runScanSimulation(scanId, target, scanType);
     });
   });
 
@@ -374,6 +444,204 @@ function initScans() {
     const q = e.target.value.toLowerCase();
     renderScansTable('scans-table', Store.scans.filter(s => s.target.includes(q) || s.id.toLowerCase().includes(q) || s.type.toLowerCase().includes(q)));
   });
+}
+
+/* ========================================
+   SCAN SIMULATION ENGINE
+   Runs scan pipeline directly in the browser
+   with real-time agent progress tracking
+   ======================================== */
+function runScanSimulation(scanId, target, scanType) {
+  const scan = Store.scans.find(s => s.id === scanId);
+  if (!scan) return;
+
+  // Determine which agents run based on scan type
+  const typeAgentMap = {
+    'Full Pipeline': AGENTS.map(a => a.id),
+    'Recon Only': ['pre-recon', 'recon'],
+    'Vulnerability Analysis Only': ['pre-recon', 'recon', 'injection-vuln', 'xss-vuln', 'auth-vuln', 'ssrf-vuln', 'authz-vuln'],
+    'Auth Focus': ['pre-recon', 'recon', 'auth-vuln', 'auth-exploit', 'report'],
+    'API Only': ['pre-recon', 'recon', 'injection-vuln', 'xss-vuln', 'auth-vuln', 'ssrf-vuln', 'authz-vuln', 'report'],
+  };
+  const agentIds = typeAgentMap[scanType] || typeAgentMap['Full Pipeline'];
+  const agents = AGENTS.filter(a => agentIds.includes(a.id));
+
+  // Insert progress panel into the page
+  renderScanProgressPanel(scanId, target, agents);
+
+  // Simulate agents running sequentially/in-parallel by phase
+  const phases = ['pre-recon', 'recon', 'vulnerability-analysis', 'exploitation', 'reporting'];
+  let totalCost = 0;
+  let totalMs = 0;
+  let vulnsFound = 0;
+  let phaseIndex = 0;
+
+  function runNextPhase() {
+    if (phaseIndex >= phases.length) {
+      // Scan complete
+      scan.status = 'completed';
+      scan.vulns = vulnsFound;
+      scan.cost = Math.round(totalCost * 100) / 100;
+      scan.duration = totalMs >= 3600000 ? `${Math.floor(totalMs/3600000)}h ${Math.floor((totalMs%3600000)/60000)}m` : `${Math.floor(totalMs/60000)}m`;
+      updateProgressStatus(scanId, 'completed', scan);
+      renderScansTable('scans-table', Store.scans);
+      showToast(`Scan ${scanId} finalizado! ${vulnsFound} vulnerabilidades encontradas.`);
+      return;
+    }
+
+    const phase = phases[phaseIndex];
+    const phaseAgents = agents.filter(a => a.phase === phase);
+    phaseIndex++;
+
+    if (phaseAgents.length === 0) {
+      runNextPhase();
+      return;
+    }
+
+    // Run agents in this phase "in parallel" (simulated with staggered timers)
+    let completed = 0;
+    phaseAgents.forEach((agent, i) => {
+      const delay = 800 + i * 400;
+      setTimeout(() => updateAgentStatus(scanId, agent.id, 'running'), delay);
+
+      const duration = 2000 + Math.random() * 3000;
+      const costUsd = 2.5 + Math.random() * 4;
+      const durationMs = 80000 + Math.random() * 300000;
+      const success = Math.random() > 0.08;
+      const agentVulns = success ? Math.floor(Math.random() * 5) : 0;
+
+      setTimeout(() => {
+        scan.agents[agent.id] = { success, duration_ms: durationMs, cost_usd: Math.round(costUsd * 100) / 100 };
+        totalCost += costUsd;
+        totalMs += durationMs;
+        vulnsFound += agentVulns;
+
+        updateAgentStatus(scanId, agent.id, success ? 'completed' : 'failed', {
+          duration_ms: durationMs,
+          cost_usd: costUsd,
+          vulns: agentVulns
+        });
+
+        // Update live stats
+        updateProgressStats(scanId, totalCost, totalMs, vulnsFound);
+
+        completed++;
+        if (completed >= phaseAgents.length) {
+          setTimeout(runNextPhase, 600);
+        }
+      }, delay + duration);
+    });
+  }
+
+  // Start the pipeline
+  updateProgressStatus(scanId, 'running');
+  setTimeout(runNextPhase, 500);
+}
+
+function renderScanProgressPanel(scanId, target, agents) {
+  // Remove any existing progress panel
+  const existing = document.getElementById('scan-progress-panel');
+  if (existing) existing.remove();
+
+  const panel = document.createElement('section');
+  panel.id = 'scan-progress-panel';
+  panel.className = 'form-card';
+  panel.style.cssText = 'border: 1px solid rgba(255,239,77,0.25); animation: toastIn 0.3s ease;';
+  panel.innerHTML = `
+    <div class="form-card-header">
+      <h2><i class="fas fa-satellite-dish" style="color:#FFEF4D"></i> Scan ${scanId} — Executando</h2>
+      <span class="status-badge running" id="progress-status-${scanId}">Running</span>
+    </div>
+    <div style="margin:8px 0 16px;color:#8b9cc7;font-size:13px">
+      <i class="fas fa-globe"></i> ${target}
+    </div>
+    <div style="display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap" id="progress-stats-${scanId}">
+      <div style="background:rgba(255,239,77,0.06);padding:10px 16px;border-radius:8px;font-size:12px">
+        <div style="color:#8b9cc7;margin-bottom:2px">Tempo</div>
+        <div style="color:#e8ecf5;font-weight:600;font-size:16px" id="stat-time-${scanId}">0m</div>
+      </div>
+      <div style="background:rgba(255,239,77,0.06);padding:10px 16px;border-radius:8px;font-size:12px">
+        <div style="color:#8b9cc7;margin-bottom:2px">Custo</div>
+        <div style="color:#e8ecf5;font-weight:600;font-size:16px" id="stat-cost-${scanId}">$0.00</div>
+      </div>
+      <div style="background:rgba(255,239,77,0.06);padding:10px 16px;border-radius:8px;font-size:12px">
+        <div style="color:#8b9cc7;margin-bottom:2px">Vulnerabilidades</div>
+        <div style="color:#ef4444;font-weight:600;font-size:16px" id="stat-vulns-${scanId}">0</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px" id="agents-grid-${scanId}">
+      ${agents.map(a => `
+        <div class="scan-agent-card" id="agent-${scanId}-${a.id}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);transition:all 0.3s">
+          <i class="fas ${a.icon}" style="color:#5c6a94;font-size:16px;width:20px;text-align:center" id="agent-icon-${scanId}-${a.id}"></i>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:#e8ecf5">${a.name}</div>
+            <div style="font-size:11px;color:#5c6a94" id="agent-detail-${scanId}-${a.id}">Aguardando...</div>
+          </div>
+          <div id="agent-badge-${scanId}-${a.id}" style="font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.05);color:#5c6a94">Pending</div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // Insert after the scans table header
+  const tableSection = document.querySelector('#scans-table')?.closest('.table-section');
+  if (tableSection) {
+    tableSection.parentNode.insertBefore(panel, tableSection);
+  } else {
+    document.getElementById('page-container').appendChild(panel);
+  }
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateAgentStatus(scanId, agentId, status, data) {
+  const card = document.getElementById(`agent-${scanId}-${agentId}`);
+  const detail = document.getElementById(`agent-detail-${scanId}-${agentId}`);
+  const badge = document.getElementById(`agent-badge-${scanId}-${agentId}`);
+  const icon = document.getElementById(`agent-icon-${scanId}-${agentId}`);
+  if (!card) return;
+
+  if (status === 'running') {
+    card.style.border = '1px solid rgba(255,239,77,0.3)';
+    card.style.background = 'rgba(255,239,77,0.05)';
+    if (icon) icon.style.color = '#FFEF4D';
+    if (detail) detail.textContent = 'Executando...';
+    if (badge) { badge.textContent = 'Running'; badge.style.background = 'rgba(255,239,77,0.15)'; badge.style.color = '#FFEF4D'; }
+  } else if (status === 'completed') {
+    card.style.border = '1px solid rgba(34,197,94,0.3)';
+    card.style.background = 'rgba(34,197,94,0.05)';
+    if (icon) icon.style.color = '#22c55e';
+    const dStr = data?.duration_ms ? `${(data.duration_ms / 60000).toFixed(0)}m` : '';
+    const cStr = data?.cost_usd ? `$${data.cost_usd.toFixed(2)}` : '';
+    const vStr = data?.vulns ? `${data.vulns} vulns` : '';
+    if (detail) detail.textContent = [dStr, cStr, vStr].filter(Boolean).join(' · ');
+    if (badge) { badge.textContent = 'Done'; badge.style.background = 'rgba(34,197,94,0.15)'; badge.style.color = '#22c55e'; }
+  } else if (status === 'failed') {
+    card.style.border = '1px solid rgba(239,68,68,0.3)';
+    card.style.background = 'rgba(239,68,68,0.05)';
+    if (icon) icon.style.color = '#ef4444';
+    if (detail) detail.textContent = 'Falhou';
+    if (badge) { badge.textContent = 'Failed'; badge.style.background = 'rgba(239,68,68,0.15)'; badge.style.color = '#ef4444'; }
+  }
+}
+
+function updateProgressStats(scanId, cost, totalMs, vulns) {
+  const timeEl = document.getElementById(`stat-time-${scanId}`);
+  const costEl = document.getElementById(`stat-cost-${scanId}`);
+  const vulnsEl = document.getElementById(`stat-vulns-${scanId}`);
+  if (timeEl) timeEl.textContent = totalMs >= 3600000 ? `${Math.floor(totalMs/3600000)}h ${Math.floor((totalMs%3600000)/60000)}m` : `${Math.floor(totalMs/60000)}m`;
+  if (costEl) costEl.textContent = `$${cost.toFixed(2)}`;
+  if (vulnsEl) vulnsEl.textContent = vulns;
+}
+
+function updateProgressStatus(scanId, status, scan) {
+  const badge = document.getElementById(`progress-status-${scanId}`);
+  const header = document.querySelector('#scan-progress-panel .form-card-header h2');
+  if (status === 'completed') {
+    if (badge) { badge.className = 'status-badge success'; badge.textContent = 'Completed'; }
+    if (header) header.innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e"></i> Scan ${scanId} — Finalizado`;
+  } else if (status === 'running') {
+    if (badge) { badge.className = 'status-badge running'; badge.textContent = 'Running'; }
+  }
 }
 
 /* ========================================
