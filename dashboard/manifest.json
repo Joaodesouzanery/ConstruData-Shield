@@ -1,0 +1,26 @@
+{
+  "name": "ConstruData Shield",
+  "short_name": "Shield",
+  "description": "AI-powered security testing platform using 13 Claude Opus agents",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0c1530",
+  "theme_color": "#2A428C",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./assets/shield-icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/shield-icon-192.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["security", "developer-tools"],
+  "lang": "pt-BR"
+}

