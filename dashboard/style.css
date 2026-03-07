@@ -1685,6 +1685,500 @@ input[type="checkbox"] {
 }
 
 /* ========================================
+   TUTORIAL PAGE
+   ======================================== */
+.tutorial-progress-bar {
+  position: relative;
+  width: 200px;
+  height: 8px;
+  background: var(--surface-1);
+  border-radius: 4px;
+  overflow: hidden;
+  align-self: center;
+}
+
+.tutorial-progress-fill {
+  height: 100%;
+  background: var(--yellow);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.tutorial-progress-text {
+  position: absolute;
+  right: 0;
+  top: -20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tutorial-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tutorial-step {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.tutorial-step.active {
+  border-color: var(--yellow);
+}
+
+.tutorial-step.completed {
+  border-color: var(--success);
+}
+
+.tutorial-step.locked {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tutorial-step-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+
+.tutorial-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.tutorial-step.active .tutorial-step-num {
+  background: var(--yellow);
+  color: var(--navy-darkest);
+}
+
+.tutorial-step.completed .tutorial-step-num {
+  background: var(--success);
+  color: #fff;
+}
+
+.tutorial-step-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.tutorial-step-header p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tutorial-step-status {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.tutorial-step.completed .tutorial-step-status {
+  color: var(--success);
+}
+
+.tutorial-step-body {
+  padding: 0 20px 20px;
+  display: none;
+}
+
+.tutorial-step.active .tutorial-step-body {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+/* Tutorial info cards */
+.tutorial-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tutorial-info-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+}
+
+.tutorial-info-icon {
+  font-size: 24px;
+  color: var(--yellow);
+  margin-bottom: 10px;
+}
+
+.tutorial-info-card h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.tutorial-info-card p {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Pipeline visual */
+.tutorial-pipeline-visual {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--surface-0);
+  border-radius: var(--radius-sm);
+  margin-bottom: 18px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pipeline-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.pipeline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--yellow-glow-strong);
+  color: var(--yellow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.pipeline-stage span:nth-child(2) {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pipeline-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.pipeline-arrow {
+  color: var(--text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.tutorial-next-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* Tutorial checklist */
+.tutorial-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tutorial-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  flex-wrap: wrap;
+}
+
+.tutorial-check-item:has(input:checked) {
+  border-color: var(--success);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.tutorial-check-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.tutorial-check-label i {
+  color: var(--yellow);
+  width: 18px;
+  text-align: center;
+}
+
+.tutorial-check-item code {
+  width: 100%;
+  display: block;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--surface-0);
+  border-radius: 4px;
+  font-size: 11.5px;
+  color: var(--yellow);
+}
+
+.tutorial-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255, 239, 77, 0.06);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 12px 0;
+}
+
+.tutorial-tip i {
+  color: var(--yellow);
+  flex-shrink: 0;
+}
+
+.tutorial-tip code {
+  background: var(--surface-1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--yellow);
+}
+
+/* Tutorial terminal simulation */
+.tutorial-terminal {
+  background: #0d1117;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #161b22;
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.terminal-dot.red { background: #ff5f57; }
+.terminal-dot.yellow { background: #febc2e; }
+.terminal-dot.green { background: #28c840; }
+
+.terminal-title {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.terminal-body {
+  padding: 14px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.terminal-line {
+  color: #c9d1d9;
+  margin-bottom: 2px;
+}
+
+.terminal-cmd {
+  color: var(--yellow);
+}
+
+.terminal-output {
+  color: #8b949e;
+}
+
+.terminal-success {
+  color: #3fb950;
+}
+
+.terminal-run-btn {
+  margin: 0 14px 14px;
+}
+
+/* Tutorial agents grid */
+.tutorial-agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tutorial-agent-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s;
+}
+
+.tutorial-agent-card.running {
+  border-color: var(--yellow);
+}
+
+.tutorial-agent-card.done {
+  border-color: var(--success);
+}
+
+.tutorial-agent-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.tutorial-agent-card.running .tutorial-agent-icon {
+  color: var(--yellow);
+  animation: pulse 1.5s infinite;
+}
+
+.tutorial-agent-card.done .tutorial-agent-icon {
+  color: var(--success);
+}
+
+.tutorial-agent-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tutorial-agent-status {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Tutorial result preview */
+.tutorial-result-preview {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.tutorial-result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tutorial-result-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tutorial-result-stat {
+  text-align: center;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+}
+
+.tutorial-result-stat .stat-num {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.tutorial-result-stat span:last-child {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tutorial-result-stat.critical .stat-num { color: var(--critical); }
+.tutorial-result-stat.high .stat-num { color: var(--high); }
+.tutorial-result-stat.medium .stat-num { color: var(--medium); }
+.tutorial-result-stat.low .stat-num { color: var(--low); }
+
+.tutorial-result-stat.critical { border: 1px solid rgba(239,68,68,0.2); }
+.tutorial-result-stat.high { border: 1px solid rgba(249,115,22,0.2); }
+.tutorial-result-stat.medium { border: 1px solid rgba(255,239,77,0.2); }
+.tutorial-result-stat.low { border: 1px solid rgba(96,165,250,0.2); }
+
+.tutorial-complete-box {
+  text-align: center;
+  padding: 30px 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--success);
+  border-radius: var(--radius);
+}
+
+.tutorial-complete-icon {
+  font-size: 40px;
+  color: var(--yellow);
+  margin-bottom: 12px;
+}
+
+.tutorial-complete-box h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--success);
+  margin-bottom: 6px;
+}
+
+.tutorial-complete-box p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 /* Small tablets / large phones (900px) */
@@ -2024,6 +2518,46 @@ input[type="checkbox"] {
     left: 14px !important;
     right: 14px !important;
     bottom: 14px !important;
+  }
+
+  /* Tutorial */
+  .tutorial-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tutorial-pipeline-visual {
+    padding: 12px;
+    gap: 6px;
+  }
+
+  .pipeline-stage {
+    min-width: 60px;
+  }
+
+  .pipeline-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .tutorial-agents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tutorial-result-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tutorial-step-header {
+    padding: 14px 16px;
+  }
+
+  .tutorial-step-body {
+    padding: 0 16px 16px;
+  }
+
+  .tutorial-progress-bar {
+    width: 140px;
   }
 }
 

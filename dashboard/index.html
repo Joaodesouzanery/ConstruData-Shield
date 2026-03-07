@@ -52,6 +52,11 @@
           <span>Alerts</span>
           <span class="nav-badge">3</span>
         </a>
+        <a href="#tutorial" class="nav-item" data-page="tutorial">
+          <i class="fas fa-graduation-cap"></i>
+          <span>Tutorial</span>
+          <span class="nav-badge" style="background:var(--yellow);color:var(--navy-darkest)">NEW</span>
+        </a>
       </div>
 
       <div class="nav-group">
@@ -405,6 +410,194 @@
         </div>
       </div>
     </section>
+  </template>
+
+  <!-- TUTORIAL PAGE -->
+  <template id="tpl-tutorial">
+    <section class="page-header-row">
+      <div>
+        <h1 class="page-title">Tutorial Interativo</h1>
+        <p class="page-subtitle">Aprenda a usar o ConstruData Shield passo a passo</p>
+      </div>
+      <div class="tutorial-progress-bar">
+        <div class="tutorial-progress-fill" id="tutorial-progress-fill"></div>
+        <span class="tutorial-progress-text" id="tutorial-progress-text">0 / 6</span>
+      </div>
+    </section>
+
+    <div class="tutorial-container" id="tutorial-container">
+      <!-- Step 1 -->
+      <div class="tutorial-step" data-step="1">
+        <div class="tutorial-step-header">
+          <div class="tutorial-step-num">1</div>
+          <div>
+            <h3>O que e o ConstruData Shield?</h3>
+            <p>Entenda como a plataforma funciona antes de comecar</p>
+          </div>
+          <span class="tutorial-step-status" id="step-status-1"><i class="fas fa-circle"></i></span>
+        </div>
+        <div class="tutorial-step-body">
+          <div class="tutorial-info-grid">
+            <div class="tutorial-info-card">
+              <div class="tutorial-info-icon"><i class="fas fa-robot"></i></div>
+              <h4>13 Agentes de IA</h4>
+              <p>Claude Opus analisa codigo-fonte e testa a aplicacao com 13 agentes especializados em paralelo</p>
+            </div>
+            <div class="tutorial-info-card">
+              <div class="tutorial-info-icon"><i class="fas fa-docker"></i></div>
+              <h4>Docker + Temporal</h4>
+              <p>Roda isolado em containers Docker, orquestrado pelo Temporal para resiliencia e resumabilidade</p>
+            </div>
+            <div class="tutorial-info-card">
+              <div class="tutorial-info-icon"><i class="fas fa-file-shield"></i></div>
+              <h4>Relatorio Executivo</h4>
+              <p>Gera relatorio completo com provas, severidade CVSS, e recomendacoes de correcao</p>
+            </div>
+          </div>
+          <div class="tutorial-pipeline-visual">
+            <div class="pipeline-stage"><span class="pipeline-icon"><i class="fas fa-magnifying-glass-chart"></i></span><span>Pre-Recon</span><span class="pipeline-desc">Analise de codigo</span></div>
+            <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="pipeline-stage"><span class="pipeline-icon"><i class="fas fa-satellite-dish"></i></span><span>Recon</span><span class="pipeline-desc">Mapeamento web</span></div>
+            <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="pipeline-stage"><span class="pipeline-icon"><i class="fas fa-bug"></i></span><span>Vuln Analysis</span><span class="pipeline-desc">5 agentes</span></div>
+            <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="pipeline-stage"><span class="pipeline-icon"><i class="fas fa-skull-crossbones"></i></span><span>Exploitation</span><span class="pipeline-desc">5 agentes</span></div>
+            <div class="pipeline-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="pipeline-stage"><span class="pipeline-icon"><i class="fas fa-clipboard-check"></i></span><span>Report</span><span class="pipeline-desc">Avaliacao final</span></div>
+          </div>
+          <button class="btn-primary tutorial-next-btn" data-next="2"><i class="fas fa-check"></i> Entendi, proximo passo</button>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="tutorial-step locked" data-step="2">
+        <div class="tutorial-step-header">
+          <div class="tutorial-step-num">2</div>
+          <div>
+            <h3>Pre-requisitos</h3>
+            <p>O que voce precisa ter configurado</p>
+          </div>
+          <span class="tutorial-step-status" id="step-status-2"><i class="fas fa-lock"></i></span>
+        </div>
+        <div class="tutorial-step-body">
+          <div class="tutorial-checklist">
+            <label class="tutorial-check-item"><input type="checkbox" class="tutorial-checkbox" data-req="docker"><span class="tutorial-check-label"><i class="fab fa-docker"></i> Docker + Docker Compose instalados</span><code>docker --version && docker compose version</code></label>
+            <label class="tutorial-check-item"><input type="checkbox" class="tutorial-checkbox" data-req="apikey"><span class="tutorial-check-label"><i class="fas fa-key"></i> ANTHROPIC_API_KEY configurada no .env</span><code>cp .env.example .env && nano .env</code></label>
+            <label class="tutorial-check-item"><input type="checkbox" class="tutorial-checkbox" data-req="repo"><span class="tutorial-check-label"><i class="fas fa-folder-open"></i> Codigo-fonte do alvo em ./repos/</span><code>cp -r /path/to/my-app ./repos/my-app</code></label>
+            <label class="tutorial-check-item"><input type="checkbox" class="tutorial-checkbox" data-req="target"><span class="tutorial-check-label"><i class="fas fa-globe"></i> Aplicacao alvo rodando (staging)</span><code>curl -I https://staging.meuapp.com</code></label>
+          </div>
+          <button class="btn-primary tutorial-next-btn" data-next="3" disabled><i class="fas fa-check"></i> Tudo pronto, proximo</button>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="tutorial-step locked" data-step="3">
+        <div class="tutorial-step-header">
+          <div class="tutorial-step-num">3</div>
+          <div>
+            <h3>Configurar o Scan</h3>
+            <p>Preencha os dados do alvo e escolha o tipo de teste</p>
+          </div>
+          <span class="tutorial-step-status" id="step-status-3"><i class="fas fa-lock"></i></span>
+        </div>
+        <div class="tutorial-step-body">
+          <div class="tutorial-demo-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>URL do Alvo (staging) <span class="required">*</span></label>
+                <input type="url" id="tut-url" placeholder="https://staging.meuapp.com" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Nome do Repositorio <span class="required">*</span></label>
+                <input type="text" id="tut-repo" placeholder="meu-app" class="form-input">
+              </div>
+            </div>
+            <div class="tutorial-tip"><i class="fas fa-lightbulb"></i> Preencha os campos acima para gerar o comando CLI automaticamente</div>
+            <div class="cli-preview" id="tut-cli-preview" style="display:none">
+              <div class="cli-preview-header"><i class="fas fa-terminal"></i> Seu Comando</div>
+              <code id="tut-cli-cmd"></code>
+            </div>
+          </div>
+          <button class="btn-primary tutorial-next-btn" data-next="4" disabled><i class="fas fa-check"></i> Comando gerado, proximo</button>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="tutorial-step locked" data-step="4">
+        <div class="tutorial-step-header">
+          <div class="tutorial-step-num">4</div>
+          <div>
+            <h3>Executar no Servidor</h3>
+            <p>Copie e execute o comando no seu terminal</p>
+          </div>
+          <span class="tutorial-step-status" id="step-status-4"><i class="fas fa-lock"></i></span>
+        </div>
+        <div class="tutorial-step-body">
+          <div class="tutorial-terminal">
+            <div class="terminal-header"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">Terminal</span></div>
+            <div class="terminal-body" id="terminal-sim">
+              <div class="terminal-line">$ <span class="terminal-cmd" id="tut-terminal-cmd">./shield start URL=https://staging.meuapp.com REPO=meu-app</span></div>
+            </div>
+            <button class="btn-outline terminal-run-btn" id="tut-run-btn"><i class="fas fa-play"></i> Simular Execucao</button>
+          </div>
+          <button class="btn-primary tutorial-next-btn" data-next="5" disabled><i class="fas fa-check"></i> Proximo</button>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="tutorial-step locked" data-step="5">
+        <div class="tutorial-step-header">
+          <div class="tutorial-step-num">5</div>
+          <div>
+            <h3>Monitorar o Progresso</h3>
+            <p>Acompanhe os agentes trabalhando em tempo real</p>
+          </div>
+          <span class="tutorial-step-status" id="step-status-5"><i class="fas fa-lock"></i></span>
+        </div>
+        <div class="tutorial-step-body">
+          <div class="tutorial-agents-grid" id="tut-agents-grid"></div>
+          <button class="btn-primary tutorial-next-btn" data-next="6"><i class="fas fa-check"></i> Proximo</button>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="tutorial-step locked" data-step="6">
+        <div class="tutorial-step-header">
+          <div class="tutorial-step-num">6</div>
+          <div>
+            <h3>Analisar Resultados</h3>
+            <p>Entenda o relatorio e priorize correcoes</p>
+          </div>
+          <span class="tutorial-step-status" id="step-status-6"><i class="fas fa-lock"></i></span>
+        </div>
+        <div class="tutorial-step-body">
+          <div class="tutorial-result-preview">
+            <div class="tutorial-result-header">
+              <div class="report-icon"><i class="fas fa-file-shield"></i></div>
+              <div>
+                <div class="report-title">staging.meuapp.com - Security Assessment</div>
+                <div class="report-date">Gerado automaticamente pelo agente de Report</div>
+              </div>
+            </div>
+            <div class="tutorial-result-stats">
+              <div class="tutorial-result-stat critical"><span class="stat-num">3</span><span>Critical</span></div>
+              <div class="tutorial-result-stat high"><span class="stat-num">7</span><span>High</span></div>
+              <div class="tutorial-result-stat medium"><span class="stat-num">12</span><span>Medium</span></div>
+              <div class="tutorial-result-stat low"><span class="stat-num">19</span><span>Low</span></div>
+            </div>
+            <div class="tutorial-result-actions">
+              <span class="tutorial-tip"><i class="fas fa-lightbulb"></i> Relatorio completo fica em <code>./repos/meu-app/deliverables/comprehensive_security_assessment_report.md</code></span>
+            </div>
+          </div>
+          <div class="tutorial-complete-box">
+            <div class="tutorial-complete-icon"><i class="fas fa-trophy"></i></div>
+            <h3>Tutorial Completo!</h3>
+            <p>Voce esta pronto para usar o ConstruData Shield. Comece um scan real agora.</p>
+            <button class="btn-primary" onclick="window.location.hash='scans'"><i class="fas fa-rocket"></i> Iniciar Primeiro Scan</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </template>
 
   <script src="app.js"></script>
