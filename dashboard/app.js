@@ -206,10 +206,12 @@ function initScans() {
     const url = urlInput.value.trim();
     const repo = repoInput.value.trim();
     if (!url || !repo) { alert('Target URL and Repository Name are required.'); return; }
-    const scanId = Store.addScan({ target: (() => { try { return new URL(url).hostname; } catch { return url; } })(), type: typeInput.options[typeInput.selectedIndex].text.split(' (')[0], duration: '0m' });
-    closeForm();
-    renderScansTable('scans-table', Store.scans);
-    showToast(`Scan ${scanId} created! Run the CLI command on your server to execute.`);
+    showAuthorizationModal(url, () => {
+      const scanId = Store.addScan({ target: (() => { try { return new URL(url).hostname; } catch { return url; } })(), type: typeInput.options[typeInput.selectedIndex].text.split(' (')[0], duration: '0m' });
+      closeForm();
+      renderScansTable('scans-table', Store.scans);
+      showToast(`Scan ${scanId} created! Run the CLI command on your server to execute.`);
+    });
   });
 
   document.getElementById('scan-search').addEventListener('input', e => {
@@ -268,6 +270,114 @@ function showToast(message) {
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 4000);
 }
 
+/* ========================================
+   AUTHORIZATION MODAL
+   ======================================== */
+function showAuthorizationModal(targetUrl, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-icon"><i class="fas fa-shield-halved"></i></div>
+      <h2>Authorization Required</h2>
+      <p class="modal-subtitle">You must confirm authorization before scanning <strong>${targetUrl}</strong></p>
+
+      <div class="legal-box">
+        <h4>Terms of Authorized Security Testing</h4>
+        <ul>
+          <li>I am the <strong>owner</strong> of the target application or have <strong>written authorization</strong> from the owner to perform security testing.</li>
+          <li>I understand that this tool will actively probe for vulnerabilities, including sending specially crafted requests to detect SQL injection, XSS, auth bypass, SSRF, and other security weaknesses.</li>
+          <li>I confirm the target is a <strong>staging/test environment</strong> or I accept full responsibility for testing production systems.</li>
+          <li>I understand this tool does <strong>not modify data destructively</strong> but may create test entries during the scanning process.</li>
+        </ul>
+        <p class="warning-text">Unauthorized computer access is a criminal offense under Art. 154-A of the Brazilian Penal Code, the US Computer Fraud and Abuse Act (CFAA), and similar laws worldwide.</p>
+      </div>
+
+      <div class="consent-row" id="consent-1">
+        <input type="checkbox" id="chk-owner">
+        <label for="chk-owner">I own this application or have explicit written authorization to test it</label>
+      </div>
+      <div class="consent-row" id="consent-2">
+        <input type="checkbox" id="chk-staging">
+        <label for="chk-staging">I am testing against a staging/test environment (or accept full responsibility)</label>
+      </div>
+      <div class="consent-row" id="consent-3">
+        <input type="checkbox" id="chk-legal">
+        <label for="chk-legal">I understand the legal implications and take full responsibility</label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" id="modal-cancel"><i class="fas fa-times"></i> Cancel</button>
+        <button class="btn-primary" id="modal-confirm" disabled><i class="fas fa-check"></i> Confirm & Launch</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const chk1 = overlay.querySelector('#chk-owner');
+  const chk2 = overlay.querySelector('#chk-staging');
+  const chk3 = overlay.querySelector('#chk-legal');
+  const confirmBtn = overlay.querySelector('#modal-confirm');
+
+  function updateConfirmState() {
+    confirmBtn.disabled = !(chk1.checked && chk2.checked && chk3.checked);
+  }
+
+  [chk1, chk2, chk3].forEach(c => c.addEventListener('change', updateConfirmState));
+
+  // Make consent rows clickable
+  overlay.querySelectorAll('.consent-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'INPUT') {
+        const chk = row.querySelector('input');
+        chk.checked = !chk.checked;
+        updateConfirmState();
+      }
+    });
+  });
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#modal-cancel').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  confirmBtn.addEventListener('click', () => {
+    close();
+    onConfirm();
+  });
+}
+
+/* ========================================
+   MOBILE MENU
+   ======================================== */
+function initMobileMenu() {
+  const btn = document.getElementById('mobile-menu-btn');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+
+  if (!btn || !sidebar || !overlay) return;
+
+  btn.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+  });
+
+  // Close sidebar when a nav item is clicked (mobile)
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 640) {
+        sidebar.classList.remove('open');
+      }
+    });
+  });
+}
+
 /* ── Init ── */
 window.addEventListener('hashchange', () => navigate(getPageFromHash()));
-document.addEventListener('DOMContentLoaded', () => navigate(getPageFromHash()));
+document.addEventListener('DOMContentLoaded', () => {
+  navigate(getPageFromHash());
+  initMobileMenu();
+});
