@@ -213,6 +213,14 @@ const Store = {
   }
 };
 
+/* ── HTML Escape (prevents XSS when rendering vuln data) ── */
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 /* ── Chart tokens ── */
 const YELLOW = '#FFEF4D';
 const NAVY_LIGHT = '#334d9e';
@@ -660,40 +668,40 @@ function initVulnerabilities() {
     const list = document.getElementById('vuln-list');
     const filtered = filter === 'all' ? Store.vulns : Store.vulns.filter(v => v.severity === filter);
     list.innerHTML = filtered.length ? filtered.map(v =>
-      `<div class="vuln-item ${v.severity}" data-vuln-id="${v.id}">
+      `<div class="vuln-item ${esc(v.severity)}" data-vuln-id="${esc(v.id)}">
         <div class="vuln-header">
-          <div class="vuln-severity ${v.severity}">${v.severity}</div>
+          <div class="vuln-severity ${esc(v.severity)}">${esc(v.severity)}</div>
           <div class="vuln-info">
-            <div class="vuln-title">${v.title}</div>
-            <div class="vuln-meta">${v.category} &middot; ${v.id} &middot; Scan #${v.scan} &middot; Agent: ${v.agent || 'n/a'} &middot; <span class="status-badge ${v.status==='open'?'failed':'success'}">${v.status}</span></div>
+            <div class="vuln-title">${esc(v.title)}</div>
+            <div class="vuln-meta">${esc(v.category)} &middot; ${esc(v.id)} &middot; Scan #${esc(v.scan)} &middot; Agent: ${esc(v.agent || 'n/a')} &middot; <span class="status-badge ${v.status==='open'?'failed':'success'}">${esc(v.status)}</span></div>
           </div>
-          <div class="vuln-target">${v.target}</div>
+          <div class="vuln-target">${esc(v.target)}</div>
           <div class="vuln-expand-icon"><i class="fas fa-chevron-down"></i></div>
         </div>
         <div class="vuln-detail-panel">
           <div class="vuln-detail-grid">
             <div class="vuln-detail-section">
               <div class="vuln-detail-label"><i class="fas fa-info-circle"></i> O que é?</div>
-              <div class="vuln-detail-text">${v.explanation || ''}</div>
+              <div class="vuln-detail-text">${esc(v.explanation)}</div>
             </div>
             <div class="vuln-detail-section">
               <div class="vuln-detail-label"><i class="fas fa-explosion"></i> Impacto</div>
-              <div class="vuln-detail-text">${v.impact || ''}</div>
+              <div class="vuln-detail-text">${esc(v.impact)}</div>
             </div>
             <div class="vuln-detail-section vuln-detail-full">
               <div class="vuln-detail-label"><i class="fas fa-wrench"></i> Remediação</div>
-              <div class="vuln-detail-text">${v.remediation || ''}</div>
+              <div class="vuln-detail-text">${esc(v.remediation)}</div>
             </div>
           </div>
           <div class="vuln-detail-footer">
             <div class="vuln-detail-badges">
               ${v.cvss ? `<span class="vuln-badge cvss"><i class="fas fa-gauge-high"></i> CVSS ${v.cvss}</span>` : ''}
-              ${v.cwe ? `<span class="vuln-badge cwe"><i class="fas fa-hashtag"></i> ${v.cwe}</span>` : ''}
-              ${v.endpoint ? `<span class="vuln-badge endpoint"><i class="fas fa-link"></i> ${v.endpoint}</span>` : ''}
+              ${v.cwe ? `<span class="vuln-badge cwe"><i class="fas fa-hashtag"></i> ${esc(v.cwe)}</span>` : ''}
+              ${v.endpoint ? `<span class="vuln-badge endpoint"><i class="fas fa-link"></i> ${esc(v.endpoint)}</span>` : ''}
             </div>
-            ${v.references && v.references.length ? `<div class="vuln-detail-refs"><span class="vuln-detail-label-sm"><i class="fas fa-book"></i> Referências:</span> ${v.references.map(r => `<a href="${r}" target="_blank" rel="noopener">${r.includes('owasp') ? 'OWASP' : r.includes('portswigger') ? 'PortSwigger' : r.includes('mozilla') ? 'MDN' : r.includes('cheatsheetseries') ? 'CheatSheet' : 'Link'}</a>`).join(' ')}</div>` : ''}
+            ${v.references && v.references.length ? `<div class="vuln-detail-refs"><span class="vuln-detail-label-sm"><i class="fas fa-book"></i> Referências:</span> ${v.references.map(r => `<a href="${esc(r)}" target="_blank" rel="noopener">${r.includes('owasp') ? 'OWASP' : r.includes('portswigger') ? 'PortSwigger' : r.includes('mozilla') ? 'MDN' : r.includes('cheatsheetseries') ? 'CheatSheet' : 'Link'}</a>`).join(' ')}</div>` : ''}
           </div>
-          ${v.evidence ? `<div class="vuln-detail-evidence"><div class="vuln-detail-label-sm"><i class="fas fa-terminal"></i> Evidência</div><code>${v.evidence}</code></div>` : ''}
+          ${v.evidence ? `<div class="vuln-detail-evidence"><div class="vuln-detail-label-sm"><i class="fas fa-terminal"></i> Evidência</div><code>${esc(v.evidence)}</code></div>` : ''}
         </div>
       </div>`
     ).join('') : '<div class="empty-state"><div class="empty-state-icon"><i class="fas fa-check-circle"></i></div><h2 class="empty-state-title">No vulnerabilities</h2><p class="empty-state-text">No findings match this filter.</p></div>';
@@ -1103,14 +1111,14 @@ function exportReportPDF(scanId) {
 <h2>Vulnerabilities (${scanVulns.length})</h2>
 ${scanVulns.map(v => `
 <div class="vuln-card">
-  <h3><span class="severity ${v.severity}">${v.severity}</span> ${v.title}</h3>
+  <h3><span class="severity ${esc(v.severity)}">${esc(v.severity)}</span> ${esc(v.title)}</h3>
   ${v.cvss ? `<p><span class="label">CVSS:</span> ${v.cvss}</p>` : ''}
-  ${v.cwe ? `<p><span class="label">CWE:</span> ${v.cwe}</p>` : ''}
-  ${v.endpoint ? `<p><span class="label">Endpoint:</span> <code>${v.endpoint}</code></p>` : ''}
-  ${v.explanation ? `<p><span class="label">Descrição:</span> ${v.explanation}</p>` : ''}
-  ${v.impact ? `<p><span class="label">Impacto:</span> ${v.impact}</p>` : ''}
-  ${v.remediation ? `<p><span class="label">Remediação:</span> ${v.remediation}</p>` : ''}
-  ${v.evidence ? `<p><span class="label">Evidência:</span> <code>${v.evidence}</code></p>` : ''}
+  ${v.cwe ? `<p><span class="label">CWE:</span> ${esc(v.cwe)}</p>` : ''}
+  ${v.endpoint ? `<p><span class="label">Endpoint:</span> <code>${esc(v.endpoint)}</code></p>` : ''}
+  ${v.explanation ? `<p><span class="label">Descrição:</span> ${esc(v.explanation)}</p>` : ''}
+  ${v.impact ? `<p><span class="label">Impacto:</span> ${esc(v.impact)}</p>` : ''}
+  ${v.remediation ? `<p><span class="label">Remediação:</span> ${esc(v.remediation)}</p>` : ''}
+  ${v.evidence ? `<p><span class="label">Evidência:</span> <code>${esc(v.evidence)}</code></p>` : ''}
 </div>`).join('')}
 
 <div class="footer">
